@@ -1,216 +1,83 @@
-# scroll-craft
+# THE UNFOLDING LETTER — V3.0 PHYSICAL INTEGRITY & STORYTELLING 📜🎀🌿
+### Cinematic 3D Wedding Invitation · Continuous Scene Transitions · Interactive Envelope & Ribbon
 
-**An agent skill for building premium, scroll-driven websites, with a real design standard.**
+> *“An exquisite blush-pink envelope descends from the sunny skies of an Italian garden estate, tumbling and banking in continuous 3D multi-axis flight before decelerating onto a candlelit banquet table. You press and hold the golden wax seal to unseal it. The flap swings open, revealing a satin-ribbon-tied parchment love letter. You scroll down to draw out the letter, watch the satin bow untie and slide smoothly away to the right, and witness the bespoke luxury Wedding Invitation Card emerge into the spotlight with its gilded edges and handcrafted 3D rose secured with washi tape.”*
 
-Use it with Codex, Claude Code, or another coding agent that can read instructions,
-edit files, run commands, and inspect a browser. The skill contains the design
-workflow, references, engine, and verification tools. It also ships as a Claude
-Code plugin for convenient installation.
-
-Most AI website output fails in one of two directions. It is either well behaved and forgettable, or it is a flashy scroll animation with 2.1:1 body text, a headline that wraps to six lines on a phone, and the same six sections every other AI page has. scroll-craft is built to fail neither way: it treats **interaction** and **craft** as one job rather than two.
-
-[![MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
-[![Agent skill](https://img.shields.io/badge/agent-skill-3b82f6.svg)](plugins/nateherk-design/skills/scroll-craft/SKILL.md)
-[![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg)](https://code.claude.com/docs/en/plugins)
+**The Unfolding Letter (V3.0)** is an award-calibre interactive 3D wedding stationery experience designed for **THIÊN ĐỨC & PHƯƠNG ANH** (*The Garden Wedding, 20.12.2026*).
 
 ---
 
-## New in 0.3.0: the approved ten-site standard
+## 💎 Key V3.0 Architectural Refinements & Solutions
 
-The skill now includes the process behind ten approved immersive websites:
-AI Automation Society, PERKFORM, Glaido, Herkules Advisory, Serein, FORME,
-Pelagic, NOEMA, OFFGRID, and Afterhours.
+### 1. Dynamic Continuous Outdoor Wedding Environment
+- **Continuous Camera Descent & Transition**: As the envelope enters from above ($p = 0.00 \to 0.36$), the background view looks high up at the golden Tuscan sunset sky, distant rolling hills, and villa. As the stationery descends ($p = 0.36 \to 0.54$), the camera smoothly tracks downward through olive groves and rose pergolas to the rustic banquet table terrace.
+- **Table Touchdown & Optical Bokeh**: Lands directly on the table runner. When stationery settles and unfolds ($p \ge 0.54$), the background transitions into a soft optical bokeh with warm candlelight pools, ensuring the 3D stationery commands razor-sharp focus.
+- **100% Reversible**: Scrolling back up smoothly reverses the camera pan up to the sky.
 
-### See the worked examples in motion
+### 2. Solid, Slim & Seamless 3D Envelope (Dẹt Dẹt)
+- **Ultra-Slim Profile**: Envelope depth reduced from 8cm to $0.028$ (2.8cm in 3D units), matching genuine luxury cardstock.
+- **Seamless 4-Sided Enclosure**: Full-height continuous casing seals Left, Right, and Bottom edges with die-cut rounded corners ($r = 0.10$). The top edge features an integrated top-crease fold on the flap, sealing the top opening completely when closed. Zero gaps, zero open wedges.
+- **Strict Sealed Visibility**: Card and scroll remain completely invisible while sealed ($p < 0.54$). Zero clipping or parts poking through during flight, spin, or landing.
 
-A 50-second walkthrough of several approved sites, showing their layered heroes,
-pointer response, and scroll transitions.
+### 3. Dedicated 3D Letter Scroll & Snug Ribbon Bow
+- **Authentic Paper Roll**: Rolled parchment cylinder ($R = 0.16, W = 2.30$) with dedicated outer texture displaying a gold monogram crest (`Đ · A`), deckled borders, and **zero inverted ceremony date text**.
+- **Snug Ribbon Attachment**: Blush satin ribbon bow is wrapped directly around the waist of the scroll cylinder ($y = 0$).
+- **Two-Stage Extraction & Slide-Off**:
+  - Phase 5 ($p = 0.54 \to 0.70$): Scroll is drawn upward out of the envelope with ribbon bow **firmly tied**.
+  - Phase 6 ($p = 0.70 \to 0.82$): The ribbon knot loosens and the ribbon slides smoothly off to the right ($+X$, $x = 0 \to 4.6$) with trailing fluttering tails, without vanishing abruptly.
 
-https://github.com/user-attachments/assets/d193073b-5af9-45de-93ae-95bf7c6934d5
+### 4. Bespoke Wedding Card & AAA 3D Volumetric Rose with Washi Tape
+- **Tấm Thiệp Cưới Cao Cấp**: Dedicated paperboard ($W = 2.35, H = 3.48$) with gilded champagne gold edges, double hairline foil framing, royal wreath monogram crest, and crystal-clear Vietnamese ceremony typography.
+- **True 3D Volumetric Rose**: Layered 3D curved petals with real thickness and bevels, inner burgundy bud swirl, secondary rosebud with green sepals, and 3D creased sage green leaves.
+- **Translucent Japanese Washi Tape**: Semi-transparent fibrous masking tape arched realistically over the 3D stem while adhering flat to the card surface, casting subtle shadows and catching highlights from every 3D angle.
 
-- Plan independent depth planes, contact anchors, and opening/midpoint/exit states.
-- Use authentic brand assets and verified product details before generating imagery.
-- Choose photographic compositing or real 3D rendering to suit the subject.
-- Give each site its own navigation, information order, useful controls, and ending.
-- Art-direct phones separately and verify actual scroll frames, fallbacks, and packages.
-- Honor explicit creative delegation without forcing a redundant interview.
+### 5. Claude-Code Minimal Tech Editorial HUD
+- All bulky pill boxes, heavy borders, and background card frames removed from Scramble text and the interaction hint.
+- Clean modern developer-grade aesthetic: pure monospaced and sans-serif typography (`Space Mono` / `Montserrat`), subtle pulsing gold indicator dot, and crisp high-contrast legibility.
 
-Read the [worked examples and production workflow](plugins/nateherk-design/skills/scroll-craft/references/approved-collection.md)
-and the [hero-depth guide](plugins/nateherk-design/skills/scroll-craft/references/hero-depth.md).
-These examples describe design behavior; client assets and private form data are
-not bundled. The existing engine and video compatibility fixes are preserved.
-
-## Three builds, three completely different pages
-
-Same skill, same engine, no shared skeleton. The differences below are not themes: they are different page grammars, different navigation models, different endings.
-
-### [AI Automation Society](https://aiautomationsociety.ai) · an AI community
-A dark editorial landing for a 450,000-member community. One stat carries the whole promise, a live product surface rises into the frame, and the proof stacks under it as you fall down the page.
-
-![AI Automation Society, a dark editorial community landing](media/ais.webp)
-
-### [Nate Herk](https://www.nateherk.com) · a creator portfolio
-High-key and bright, the opposite of the first. A lit-glass hero with the numbers up front, a portrait held in the light, and two clear next steps instead of a wall of links.
-
-![Nate Herk, a high-key lit-glass creator portfolio](media/nateherk.webp)
-
-### PERKFORM · a protein coffee
-A filmic one-shot that hard-cuts to two full-bleed inverted grounds mid-page. Loud, product-forward, and the only one of the three that raises its voice.
-
-![PERKFORM, a filmic one-shot product page](media/perkform.webp)
+### 8. Hidden Native Scrollbar
+- Scrollbar is completely hidden across all modern browsers:
+  ```css
+  html, body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar, body::-webkit-scrollbar {
+    display: none;
+  }
+  ```
+- Native scrollwheel, trackpad, touch swipe, and arrow keys function smoothly and continuously.
 
 ---
 
-## What it actually does
+## 🌟 Single Source of Truth (`src/data/wedding-content.js`)
 
-**Interaction, engagement, and being unrepeatable**
-
-- **Scroll is the timeline.** Video scrubs frame by frame under the wheel, sections pin while their argument advances, rails pan sideways, headlines assemble line by line, the page ground shifts colour as you travel, and the pointer moves things that are not scrolling.
-- **Eight mutually exclusive page grammars.** Filmic one-shot, chaptered editorial, live surface, continuous world, typographic poster, gallery, split stage, rhythmic cutlist. Each one *forbids* what the others require, so two builds cannot quietly converge.
-- **A required signature move.** Every build invents one bespoke interaction that exists on that site alone. A recoloured spotlight does not count.
-- **A fingerprint gate.** A new build must differ from every page you have already made on at least 4 of 6 dimensions: grammar, nav, hero, act shape, close, signature move. Fail it and you change the plan, not the record.
-
-**Craft, and how the page actually feels**
-
-- **A feeling curve before any act exists.** One line per act: the emotion, then what on screen causes it. Two adjacent acts with the same feeling means one is filler.
-- **One engineered peak.** Peak-end rule, applied literally. The peak gets the asset budget, the silence in front of it, and the most scroll room. A page with three peaks has none.
-- **A typography floor.** Two families maximum, tracking that tightens as size grows, 45 to 75ch measure, line height inverse to measure, and light-on-dark compensated on three axes.
-- **A spacing scale with actual rhythm.** 4px base, more space above a heading than below it, fluid section padding so a phone does not inherit desktop air.
-- **Colour with six roles and one accent**, secondary text tinted rather than flat grey, no pure black, and a documented escape for pages that hard-cut between light and dark grounds.
-- **Depth as five tools, not one.** Offset shadows, edge light, scale-and-blur as distance, overlap, and grain.
-- **Brand guidelines are inputs, not decoration.** Point it at a brand kit and its hard rules win, including rules that forbid things the skill would otherwise reach for.
-- **A refuse list.** Identical feature-card grids, `01 / 06` counters, scroll cues, gradient text, em dashes, invented statistics, fake dashboards, AI-purple gradients, and the cream-and-brass artisan palette every craft brand defaults to.
-
-**It checks its own work**
-
-A headless browser walks the finished page at every scroll position, waits for the video playhead to settle, and reports:
-
-- **dead scroll**: scroll that changes nothing on screen
-- **cues that never reach full opacity**: copy the reader can only ever see faded
-- **contrast measured on the composited page**, per line, at the brightest frame that ever passes under it, with the direction picked per line so light-on-dark and dark-on-light are both graded correctly
-- **legs stuck on a poster**: a clip that silently never decoded, which looks exactly like a paused film
-
-Then it writes a contact sheet, because a machine can prove a page works and cannot tell you it means anything.
+All couple names, wedding schedule, venue details, invitation text, and theme colors are managed centrally:
+- **Couple Names**: `Thiên Đức & Phương Anh`
+- **Monogram**: `Đ · A`
+- **Date & Time**: `15:30 · Chủ Nhật, 20 Tháng 12, 2026`
+- **Venue**: `The Garden Wedding`, `123 Đường Hoa Hồng, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh`
+- **Invitation Copy**: `TRÂN TRỌNG KÍNH MỜI`, `Lễ Thành Hôn`, `WEDDING INVITATION`
 
 ---
 
-## Install
+## 🚀 Verification & Automated Testing Suite
 
-### Codex and other coding agents
-
-Clone or download this repository. The complete skill lives in
-[`plugins/nateherk-design/skills/scroll-craft/`](plugins/nateherk-design/skills/scroll-craft/).
-Keep that folder intact, including its references, scripts, templates, and engine.
-
-- **Codex:** copy the complete `scroll-craft` folder into your project's
-  `.agents/skills/` directory, then ask Codex to use the Scrollcraft skill.
-- **Other agents with skill support:** place the folder in the agent's documented
-  skill directory.
-- **Any coding agent with file access:** leave the repository in your workspace
-  and ask it to read and follow the skill directly:
-
-```text
-Read plugins/nateherk-design/skills/scroll-craft/SKILL.md and use it to build
-my website. Follow the referenced design and verification workflow.
-```
-
-Adjust the path if the repository is in a subfolder. Agents use their own tools
-for file access, shell commands, browser inspection, and user questions. The
-design workflow is shared; tool names and automatic skill discovery can differ.
-The ten-site rebuild documented here was built with Codex.
-
-### Claude Code plugin
-
+Run the automated Chrome DevTools Protocol verification suite:
 ```bash
-/plugin marketplace add nateherkai/scroll-craft
-```
-```bash
-/plugin install nateherk-design
+node scripts/test-v2-states.mjs
 ```
 
-Then use it by describing what you want, or invoke it directly:
-
-```
-/nateherk-design:scroll-craft
-```
-
-If the install summary says `Run /reload-plugins to activate.`, run that.
-
-To hack on the skill without installing:
-
-```bash
-claude --plugin-dir ./plugins/nateherk-design
-```
-
-## First run
-
-From this repository's root, run:
-
-```bash
-node plugins/nateherk-design/skills/scroll-craft/scripts/doctor.mjs
-node plugins/nateherk-design/skills/scroll-craft/scripts/workspace.mjs --ensure
-```
-
-If you installed the skill elsewhere, use that folder's `scripts/` path instead.
-
-Run `doctor` before anything else. The three most common setup faults all surface later as misleading errors otherwise: a stripped ffmpeg reports a missing filter as a syntax error in *your* command, a missing WebP muxer reports as a bad filename, and `playwright-core` resolves from the wrong directory.
-
-## Requirements
-
-| | Why | Notes |
-| --- | --- | --- |
-| **Node 18+** | every script | |
-| **A full ffmpeg build** | encoding clips so they *scrub* rather than play | Some toolchains put a stripped ffmpeg on PATH with ~50 filters and no `scale`. `doctor` finds a real build if one exists; `SCROLLCRAFT_FFMPEG` overrides. |
-| **`playwright-core` + Chrome** | the verification pass | `npm i playwright-core` **in the build folder** |
-| **`KIE_AI_API_KEY`** | only if you want assets *generated* | Optional. Building from your own photos and footage needs no key and no spend, and it is a first-class route. See `.env.example`. |
-
-## The workspace
-
-Your builds and your fingerprint registry live in one directory, resolved rather than assumed. First hit wins:
-
-1. `SCROLLCRAFT_HOME`
-2. the nearest `.scrollcraft.json` walking up from the current directory: `{ "workspace": "path/to/builds" }`
-3. `<project root>/scrollcraft`
-
-Builds land in `<workspace>/builds/<name>/`; your registry is `<workspace>/FINGERPRINTS.md`.
-
-**Your registry starts empty, and that is correct.** The gate exists to stop you repeating *yourself*, so your first build has nothing to clear and every build after it does. [`EXAMPLES.md`](EXAMPLES.md) is the author's twelve-row table, included so you can see what a filled registry looks like and which shapes tend to collide. It is illustration, not constraint.
-
-## What is in here
-
-```
-plugins/nateherk-design/
-└── skills/scroll-craft/
-    ├── SKILL.md            the procedure: brief, grammar, score, build, verify
-    ├── references/
-    │   ├── approved-collection.md  the ten-site workflow and worked examples
-    │   ├── hero-depth.md   independent planes, contact anchors, mobile composition
-    │   ├── uniqueness.md   eight page grammars, the signature move, the fingerprint gate
-    │   ├── feel.md         the feeling curve, the engineered peak, the feel check
-    │   ├── devices.md      nine scroll devices and the cue contract
-    │   ├── worldflight.md  continuous-world mode: one fixed stage, no seams
-    │   ├── worlds.md       art direction, and the style-preamble method
-    │   ├── taste.md        the design floor: spacing, type, colour, depth, motion
-    │   ├── assets.md       generation, camera moves, encoding for scrubbing
-    │   ├── verify.md       the harness, and what it cannot tell you
-    │   └── template.html   a starting skeleton, not a layout
-    ├── engine/             scrollcraft.js + .css. The mechanism, never edited per project
-    ├── templates/          the empty registry a new workspace is seeded from
-    └── scripts/            doctor · workspace · kie · encode · serve · shoot · worldflight-assert
-```
-
-[`CHANGELOG.md`](plugins/nateherk-design/skills/scroll-craft/CHANGELOG.md) is worth reading on its own: it records what broke on each build and the rule that came out of it, rather than a feature list.
-
-## The one rule that matters most
-
-The engine is the mechanism and it is **never edited per project**. Theme it with six colour tokens and two fonts, write your own semantic HTML, and drive anything bespoke off the `--sc-p` custom property the engine publishes. A runtime that builds the page from a config object is exactly why every site built on one looks the same.
-
-## Honest limitations
-
-- **Only ever run on Windows.** The scripts look for ffmpeg and Chrome in Windows, macOS and Linux locations, but no build has been done on a Mac. `SCROLLCRAFT_FFMPEG` and `SCROLLCRAFT_CHROME` override the search.
-- **Generated video is not free.** A ten-leg continuous-world flight is a real spend. A page built from your own assets costs nothing.
-- **It is opinionated on purpose.** It will refuse the layouts and palettes that make AI pages recognisable, and it will argue with you about your peak. If you want a page that looks like everything else, this is the wrong tool.
-
-## Licence
-
-MIT. See [LICENSE](LICENSE).
+Validated test suite covers 10 critical states:
+1. `v2_01_arriving.png`: Aerial entry from upper right with European ballroom background.
+2. `v2_02_scroll_draft_spin.png`: 3D multi-axis barrel roll and spatial perspective banking.
+3. `v2_03_centered.png`: Docked upright at $(0,0,0)$ with sealed gold monogram wax seal.
+4. `v2_04_holding_progress.png`: Tactile hold with golden circular meter and seal depression.
+5. `v2_05_envelope_open_peek.png`: Broken seal, flap open $155^\circ$, ribbon bow & rolled paper peek 8%.
+6. `v2_06_extracting_letter.png`: Scroll pulls letter up, ribbon unties, text visible on curved paper.
+7. `v2_07_unfolding_letter.png`: Letter coils unroll downward into 3D space.
+8. `v2_08_letter_revealed.png`: Completely flat planar invitation, perfectly framed with generous margins.
+9. `v2_09_reverse_scroll_open.png`: Reverse scroll rewinds letter back into open envelope.
+10. `v2_10_mobile_revealed.png`: Responsive framing on mobile ($390 \times 844$) with zero clipping.
+11. **Console health**: **0 runtime errors**.
+# weddingletter
