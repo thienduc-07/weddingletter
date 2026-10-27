@@ -414,9 +414,6 @@ export class Envelope3DMesh {
       roughness: 0.72,
       metalness: 0.04,
       side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: -1,
-      polygonOffsetUnits: -1,
     });
 
     const leftFoldShape = new THREE.Shape();
@@ -427,8 +424,6 @@ export class Envelope3DMesh {
     const leftFold = new THREE.Mesh(new THREE.ShapeGeometry(leftFoldShape), foldMat);
     leftFold.position.set(0, 0, -D / 2 - 0.001);
     leftFold.rotation.y = Math.PI;
-    leftFold.castShadow = true;
-    leftFold.receiveShadow = true;
     this.group.add(leftFold);
 
     const rightFoldShape = new THREE.Shape();
@@ -439,8 +434,6 @@ export class Envelope3DMesh {
     const rightFold = new THREE.Mesh(new THREE.ShapeGeometry(rightFoldShape), foldMat);
     rightFold.position.set(0, 0, -D / 2 - 0.001);
     rightFold.rotation.y = Math.PI;
-    rightFold.castShadow = true;
-    rightFold.receiveShadow = true;
     this.group.add(rightFold);
 
     // =========================================================================
@@ -545,8 +538,6 @@ export class Envelope3DMesh {
     topStripGeom.rotateX(-Math.PI / 2);
     topStripGeom.translate(0, 0, D / 2);
     const topStrip = new THREE.Mesh(topStripGeom, this.blushPaperMat);
-    topStrip.castShadow = true;
-    topStrip.receiveShadow = true;
     this.flapPivot.add(topStrip);
 
     // Triangular stationery flap pointing downward when closed
@@ -564,15 +555,12 @@ export class Envelope3DMesh {
     this.flapMesh.position.set(0, 0, -0.003);
     this.flapMesh.rotation.y = Math.PI; // Faces -Z (Back side)
     this.flapMesh.castShadow = true;
-    this.flapMesh.receiveShadow = true;
     this.flapPivot.add(this.flapMesh);
 
     // Inner lining of the flap (revealed when opened)
     const flapInnerGeom = new THREE.ShapeGeometry(flapShape, 20);
     this.flapInnerMesh = new THREE.Mesh(flapInnerGeom, this.innerIvoryMat);
     this.flapInnerMesh.position.set(0, 0, 0.001);
-    this.flapInnerMesh.castShadow = true;
-    this.flapInnerMesh.receiveShadow = true;
     this.flapPivot.add(this.flapInnerMesh);
 
     this.group.add(this.flapPivot);

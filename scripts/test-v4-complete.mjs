@@ -135,88 +135,10 @@ async function main() {
   console.log('Front Cover Check at p = 0.05 (Phần I & II):', frontCheck.result?.value);
   await captureState('v4_01_front_cover_arrival.png', 'Mặt trước phong bì với tên Thiên Đức & Phương Anh, KHÔNG có sáp');
 
-  // C. Falling Leaf Swings (Stages A -> D + Section 4 Landing Glide)
-  // C1. Swing 1: Lean & swoop to LEFT (p = 0.20)
-  await evaluate(`window.sceneController.setProgress(0.20, true);`);
+  // C. State 2: Flight Spin (p = 0.25)
+  await evaluate(`window.sceneController.setProgress(0.25, true);`);
   await new Promise((r) => setTimeout(r, 200));
-  const swing1Check = await evaluate(`(() => {
-    const sc = window.sceneController;
-    return {
-      state: sc.state,
-      posX: sc.stationeryGroup.position.x,
-      posY: sc.stationeryGroup.position.y,
-      rotZDeg: sc.stationeryGroup.rotation.z * 180 / Math.PI,
-      isTiltedLeft: sc.stationeryGroup.rotation.z > 0,
-    };
-  })()`);
-  console.log('Falling Leaf Swing 1 (TRÁI lớn) Check at p = 0.20:', swing1Check.result?.value);
-  await captureState('v4_02a_falling_swing_left_large.png', 'Giai đoạn A: Thiệp đung đưa sang trái biên độ lớn');
-
-  // C2. Swing 2: Swoop to RIGHT (p = 0.26)
-  await evaluate(`window.sceneController.setProgress(0.26, true);`);
-  await new Promise((r) => setTimeout(r, 200));
-  const swing2Check = await evaluate(`(() => {
-    const sc = window.sceneController;
-    return {
-      state: sc.state,
-      posX: sc.stationeryGroup.position.x,
-      posY: sc.stationeryGroup.position.y,
-      rotZDeg: sc.stationeryGroup.rotation.z * 180 / Math.PI,
-      isTiltedRight: sc.stationeryGroup.rotation.z < 0,
-    };
-  })()`);
-  console.log('Falling Leaf Swing 2 (PHẢI lớn) Check at p = 0.26:', swing2Check.result?.value);
-  await captureState('v4_02b_falling_swing_right_large.png', 'Giai đoạn B: Thiệp đung đưa sang phải');
-
-  // C3. Swing 3: Swoop to LEFT (p = 0.31)
-  await evaluate(`window.sceneController.setProgress(0.31, true);`);
-  await new Promise((r) => setTimeout(r, 200));
-  const swing3Check = await evaluate(`(() => {
-    const sc = window.sceneController;
-    return {
-      state: sc.state,
-      posX: sc.stationeryGroup.position.x,
-      posY: sc.stationeryGroup.position.y,
-      rotZDeg: sc.stationeryGroup.rotation.z * 180 / Math.PI,
-      isTiltedLeft: sc.stationeryGroup.rotation.z > 0,
-    };
-  })()`);
-  console.log('Falling Leaf Swing 3 (TRÁI vừa) Check at p = 0.31:', swing3Check.result?.value);
-  await captureState('v4_02c_falling_swing_left_medium.png', 'Giai đoạn C: Thiệp đung đưa trở lại sang trái');
-
-  // C4. Swing 4 & 5: Decaying oscillation settling tilted right (p = 0.39)
-  await evaluate(`window.sceneController.setProgress(0.39, true);`);
-  await new Promise((r) => setTimeout(r, 200));
-  const swing4Check = await evaluate(`(() => {
-    const sc = window.sceneController;
-    return {
-      state: sc.state,
-      posX: sc.stationeryGroup.position.x,
-      posY: sc.stationeryGroup.position.y,
-      rotZDeg: sc.stationeryGroup.rotation.z * 180 / Math.PI,
-      isTiltedRight: sc.stationeryGroup.rotation.z < 0,
-      envRotYDeg: sc.envelope.group.rotation.y * 180 / Math.PI,
-    };
-  })()`);
-  console.log('Falling Leaf Swing 4/5 (Nghiêng nhẹ bên phải) Check at p = 0.39:', swing4Check.result?.value);
-  await captureState('v4_02d_falling_swing_right_settle.png', 'Giai đoạn D: Thiệp ở phía nghiêng nhẹ bên phải');
-
-  // C5. Section 4: Crucial Glide Landing from Right to Left (p = 0.44)
-  await evaluate(`window.sceneController.setProgress(0.44, true);`);
-  await new Promise((r) => setTimeout(r, 200));
-  const glideCheck = await evaluate(`(() => {
-    const sc = window.sceneController;
-    return {
-      state: sc.state,
-      posX: sc.stationeryGroup.position.x,
-      posY: sc.stationeryGroup.position.y,
-      rotZDeg: sc.stationeryGroup.rotation.z * 180 / Math.PI,
-      isGlidingLeft: sc.stationeryGroup.position.x < 0.26 && sc.stationeryGroup.position.x > 0,
-      isNearTable: sc.stationeryGroup.position.y < 0,
-    };
-  })()`);
-  console.log('Section 4 Glide Landing Check at p = 0.44:', glideCheck.result?.value);
-  await captureState('v4_02e_glide_landing_right_to_left.png', 'Phần 4: Thiệp từ bên phải trượt nhẹ qua trái và đáp xuống');
+  await captureState('v4_02_flight_spin.png', 'Phong bì bay lượn trên không trung');
 
   // D. State 3: Checkpoint Landing & Turn to Back Cover (p = 0.50) — Back Cover with Wax Seal!
   await evaluate(`window.sceneController.setProgress(0.50, true);`);

@@ -137,11 +137,11 @@ export function getChapterState(p, envelopeOpened = false) {
   p = Math.max(0, Math.min(1, p));
 
   let currentIdx = 0;
-  if (!envelopeOpened) {
-    currentIdx = 3; // ACT IV: THE SEAL checkpoint (matching reference photo: "CHẠM VÀ GIỮ CON DẤU ĐỂ MỞ")
+  if (!envelopeOpened && p >= 0.48) {
+    currentIdx = 3; // THE SEAL checkpoint
   } else {
     for (let i = 0; i < CHAPTER_TIMELINE.length; i++) {
-      if (i === 3) continue; // Skip THE SEAL prompt once opened
+      if (i === 3 && envelopeOpened) continue; // Skip THE SEAL prompt once opened
       if (p >= CHAPTER_TIMELINE[i].pMin && (p < CHAPTER_TIMELINE[i].pMax || i === CHAPTER_TIMELINE.length - 1)) {
         currentIdx = i;
         break;
