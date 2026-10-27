@@ -74,6 +74,7 @@ export class SceneController {
     this.holdProgress = 0;         // 0 to 1 for wax seal press
     this.holdStartTime = 0;
     this.holdDuration = 850;       // ms required to break seal
+    this.leafSettleStartTime = null; // Timestamp for final falling leaf sway settle
 
     // Mouse & Parallax
     this.mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
@@ -656,6 +657,11 @@ export class SceneController {
       this.scrollProgress = 0.50;
     }
 
+    // Reset leaf settle timestamp whenever progress leaves the final phase (p < 0.94)
+    if (p < 0.94 && this.leafSettleStartTime !== null) {
+      this.leafSettleStartTime = null;
+    }
+
     // Base camera framing defaults
     const envCamZ = this.getEnvelopeCameraZ();
     this.baseCamX = 0;
@@ -664,29 +670,28 @@ export class SceneController {
     this.baseLookY = 0;
 
     // =========================================================================
-    // PHASE 1: THE HIGH SKY ARRIVAL (p = 0.00 -> 0.16)
-    // Envelope glides gracefully down from upper-right, front cover visible
+    // PHASE 1: THE ARRIVAL (p = 0.00 -> 0.14)
     // =========================================================================
-    if (p < 0.16) {
+    if (p < 0.14) {
       this.state = 'ARRIVING';
-      const t = p / 0.16;
+      const t = p / 0.14;
       const ease = easeInOutCubic(t);
 
-      // Curved aerial descent into the European wedding garden scene
+      // Curved 3D flight trajectory from upper-right entering the European garden scene
       this.stationeryGroup.position.set(
-        lerp(2.8, 1.4, ease),
-        lerp(2.0, 0.90, ease),
-        lerp(-1.0, -0.45, ease)
+        lerp(3.2, 1.8, ease),
+        lerp(2.2, 1.1, ease),
+        lerp(-1.2, -0.6, ease)
       );
 
-      // Smooth, natural aerodynamic flight pitch and gentle bank
+      // Smooth, continuous initial tilt and banking
       this.stationeryGroup.rotation.set(
-        lerp(0.32, 0.20, ease),
-        lerp(-0.32, -0.15, ease),
-        lerp(0.16, 0.06, ease)
+        lerp(0.40, 0.28, t) + Math.sin(t * Math.PI) * 0.15,
+        lerp(-0.55, -0.35, t),
+        lerp(0.22, 0.14, t) + Math.sin(t * Math.PI) * 0.10
       );
 
-      // Envelope sealed, front cover ("Thiên Đức & Phương Anh") facing viewer
+      // Sealed envelope state
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
       this.envelope.group.rotation.set(0, 0, 0);
@@ -694,6 +699,52 @@ export class SceneController {
       this.envelope.setSealOpacity(1.0);
 
       // Scroll is sealed inside envelope (strictly hidden until seal is broken)
+      this.scroll.group.visible = false;
+      this.scroll.group.position.set(0, -0.15, 0.025);
+      this.scroll.group.rotation.set(0, 0, 0);
+      this.scroll.setUntying(0.0);
+      this.scroll.setUnroll(0.0);
+
+      // Table contact shadow invisible during flight
+      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
+
+      // Hide interactive seal trigger during flight
+      if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
+
+      this.updateCornerHUD(p);
+      return;
+    }
+
+    // =========================================================================
+    // PHASE 2: THE SPIN (p = 0.14 -> 0.36)
+    // =========================================================================
+    if (p < 0.36) {
+      this.state = 'SCROLL_DRAFT';
+      const t = (p - 0.14) / 0.22;
+      const ease = easeInOutCubic(t);
+
+      // Swoops along graceful flight path toward banquet foreground
+      this.stationeryGroup.position.set(
+        lerp(1.8, 0.45, ease) + Math.sin(t * Math.PI) * 0.35,
+        lerp(1.1, 0.35, ease) - Math.sin(t * Math.PI) * 0.20,
+        lerp(-0.6, -0.2, ease)
+      );
+
+      // Multi-axis 3D barrel rolls and banking rotations, landing cleanly facing forward
+      this.stationeryGroup.rotation.set(
+        lerp(0.28, 0.0, ease) + Math.sin(t * Math.PI * 2) * 0.45 * (1 - ease),
+        lerp(-0.35, 0.0, ease) + t * Math.PI * 4, // 2 complete 360° rolls arriving at 0.0
+        lerp(0.14, 0.0, ease) + Math.sin(t * Math.PI) * 0.20 * (1 - ease)
+      );
+
+      // Sealed envelope state
+      this.envelope.group.visible = true;
+      this.envelope.group.position.set(0, 0, 0);
+      this.envelope.group.rotation.set(0, 0, 0);
+      this.envelope.setFlapAngle(0);
+      this.envelope.setSealOpacity(1.0);
+
+      // Scroll remains securely hidden inside sealed envelope
       this.scroll.group.visible = false;
       this.scroll.group.position.set(0, -0.15, 0.025);
       this.scroll.group.rotation.set(0, 0, 0);
@@ -708,71 +759,51 @@ export class SceneController {
     }
 
     // =========================================================================
-    // PHASE 2 & 3: THE FALLING LEAF DESCENT & LANDING (p = 0.16 -> 0.485)
-    // "kiểu rơi theo lá rơi: đung đưa trái xong phải xong rồi chậm dần rồi mới dừng lại hẳn"
-    // "kết thúc khi mà tới cái mặt mở phong bì ra á" (reveals back cover with wax seal)
+    // PHASE 3: THE LANDING (p = 0.36 -> 0.48)
     // =========================================================================
-    if (p < 0.485) {
+    if (p < 0.48) {
       this.state = 'LANDING';
-      const t = (p - 0.16) / 0.325; // 0.0 -> 1.0
+      const t = (p - 0.36) / 0.12;
       const ease = easeInOutCubic(t);
 
-      // Physical falling leaf dynamics:
-      // 1. Decay envelope: oscillation amplitude decays smoothly to 0 at t = 1.0
-      const decay = Math.pow(1 - t, 1.4);
+      // Decelerates smoothly onto the banquet table surface at y = -0.24
+      const targetPosY = -0.24;
+      const posY = lerp(0.35, targetPosY, ease);
+      const posX = lerp(0.45, 0.0, ease);
+      const posZ = lerp(-0.2, 0.0, ease);
 
-      // 2. Frequency slows down over time: "chậm dần"
-      // Using power curve so angular speed naturally decreases as envelope settles
-      const theta = 3.0 * Math.PI * (1 - Math.pow(1 - t, 1.25));
-      const sinTheta = Math.sin(theta);
+      // Subtle, realistic physical landing settle bounce
+      let bounce = 0;
+      if (t > 0.65) {
+        const bT = (t - 0.65) / 0.35;
+        bounce = Math.sin(bT * Math.PI) * 0.024 * Math.exp(-bT * 3.5);
+      }
 
-      // 3. Swaying left first, then right, then settling softly: "đung đưa trái xong phải"
-      // Cycle 1 (0 -> ~0.38): sinTheta > 0 => xSway < 0 (drifts to LEFT)
-      // Cycle 2 (~0.38 -> ~0.72): sinTheta < 0 => xSway > 0 (drifts to RIGHT)
-      // Cycle 3 (~0.72 -> 1.0): sinTheta > 0 => gentle micro-settle to 0
-      const xSway = -sinTheta * 0.65 * decay;
+      this.stationeryGroup.position.set(posX, posY + bounce, posZ);
 
-      // 4. Aerodynamic banking: roll tilt perfectly matches lateral velocity and drift
-      const zSway = -sinTheta * 0.22 * decay;
-
-      // 5. Pitch flutter and subtle air cushion beneath paper
-      const xRotSway = Math.sin(theta * 2.0) * 0.05 * decay;
-      const ySway = Math.sin(theta * 1.5) * 0.015 * decay;
-      const zDepthSway = sinTheta * 0.05 * decay;
-
-      // Position: Smooth base trajectory + falling leaf flutter
-      const posX = lerp(1.4, 0.0, ease) + xSway;
-      const posY = lerp(0.90, -0.24, ease) + ySway;
-      const posZ = lerp(-0.45, 0.0, ease) + zDepthSway;
-      this.stationeryGroup.position.set(posX, posY, posZ);
-
-      // Orientation:
-      // Base rotation smoothly levels out to upright sitting posture (0, 0, 0)
-      const rotX = lerp(0.20, 0.0, ease) + xRotSway;
-      const rotY = lerp(-0.15, 0.0, ease);
-      const rotZ = lerp(0.06, 0.0, ease) + zSway;
-      this.stationeryGroup.rotation.set(rotX, rotY, rotZ);
-
-      // Smooth Yaw rotation: "kết thúc khi mà tới cái mặt mở phong bì ra á"
-      // Envelope gracefully turns 180° (0 -> Math.PI) throughout the falling leaf dance,
-      // perfectly presenting MẶT SAU (opening flap & Royal Burgundy Wax Seal) at touchdown!
-      this.envelope.group.visible = true;
-      this.envelope.group.position.set(0, 0, 0);
-      this.envelope.group.rotation.set(0, ease * Math.PI, 0);
-      this.envelope.setFlapAngle(0);
-      this.envelope.setSealOpacity(1.0);
+      // Master stationery group remains strictly level & upright - zero roll tilt jump, zero Euler cross-coupling
+      this.stationeryGroup.rotation.set(0, 0, 0);
 
       // Camera gently tracks down toward banquet table
       this.baseCamY = lerp(0.0, -0.20, ease);
       this.baseCamZ = lerp(envCamZ, envCamZ * (7.2 / 7.5), ease);
       this.baseLookY = lerp(0.0, -0.20, ease);
 
-      // Soft contact shadow gathers under envelope on table runner
+      // Grounding contact shadow intensifies directly under the stationery base
       if (this.tableContactShadow) {
-        this.tableContactShadow.material.opacity = Math.pow(ease, 2.0) * 0.72;
+        this.tableContactShadow.material.opacity = ease * 0.72;
       }
 
-      // Reverse scroll re-lock: If user returns to p < 0.485, require hold again!
+      this.envelope.group.visible = true;
+      this.envelope.group.position.set(0, 0, 0);
+      // Graceful, smooth 180° pirouette around pure vertical Y axis as it descends to reveal back cover with wax seal
+      // Pure vertical axis yaw: strictly 0 roll / 0 pitch cross-axis tilt!
+      const flipEase = t <= 0.10 ? 0 : (t >= 0.90 ? 1 : easeInOutCubic((t - 0.10) / 0.80));
+      this.envelope.group.rotation.set(0, flipEase * Math.PI, 0);
+      this.envelope.setFlapAngle(0);
+      this.envelope.setSealOpacity(1.0);
+
+      // Strict reverse scroll re-lock: If user returns to p < 0.48, require hold again!
       if (this.envelopeOpened) {
         this.envelopeOpened = false;
         this.openingProgress = 0.0;
@@ -1009,11 +1040,52 @@ export class SceneController {
 
       // THE WEDDING LETTER is fully unrolled, planar, centered, upright, and legible!
       this.scroll.group.visible = true;
-      this.scroll.group.position.set(0, 0, 0);
-      this.scroll.group.rotation.set(0, 0, 0);
       this.scroll.setUntying(1.0);
       this.scroll.setUnroll(1.0);
       this.scroll.setRoseVisible(true);
+
+      // Section 2: Falling Leaf Sway Dynamics (5-Stage Damped Organic Physics)
+      let leafPosX = 0;
+      let leafPosY = 0;
+      let leafRotX = 0;
+      let leafRotY = 0;
+      let leafRotZ = 0;
+
+      if (!this.isReducedMotion) {
+        if (this.leafSettleStartTime === null) {
+          this.leafSettleStartTime = now;
+        }
+        const tLeaf = (now - this.leafSettleStartTime) / 1000;
+        const T_settle = 2.8;
+
+        if (tLeaf < T_settle) {
+          const tau = tLeaf / T_settle;
+          const W = Math.pow(Math.cos((Math.PI * tau) / 2), 2);
+          const w = (4 * Math.PI) / T_settle; // Exactly 2 complete left-right cycles
+          const d = 1.05; // Fluid aerodynamic damping
+          const decay = Math.exp(-d * tLeaf) * W;
+
+          const Az = 0.040; // Max ~2.3° delicate roll tilt
+          const Ax = 0.035; // Lateral aerodynamic sway
+          const Ay = 0.035; // Vertical descent & settling drift
+          const Ayaw = 0.015; // Delicate spatial yaw
+          const Apitch = 0.012; // Delicate spatial pitch
+
+          // Stage 1: starts falling down, slight tilt left
+          // Stage 2: sways right
+          // Stage 3: sways back left with reduced amplitude
+          // Stage 4: sways right towards equilibrium
+          // Stage 5: decelerates and stops completely at (0, 0, 0)
+          leafRotZ = Az * decay * Math.sin(w * tLeaf);
+          leafPosX = -Ax * decay * Math.sin(w * tLeaf);
+          leafPosY = -Ay * decay * Math.sin(w * tLeaf * 0.5);
+          leafRotY = Ayaw * decay * Math.sin(w * tLeaf + 0.4);
+          leafRotX = Apitch * decay * Math.cos(w * tLeaf);
+        }
+      }
+
+      this.scroll.group.position.set(leafPosX, leafPosY, 0);
+      this.scroll.group.rotation.set(leafRotX, leafRotY, leafRotZ);
 
       // Gentle keylight sweep across metallic gold foil
       this.keyLight.position.x = 4.5 + Math.sin(t * Math.PI) * 0.8;

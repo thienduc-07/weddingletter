@@ -135,14 +135,10 @@ async function main() {
   console.log('Front Cover Check at p = 0.05 (Phần I & II):', frontCheck.result?.value);
   await captureState('v4_01_front_cover_arrival.png', 'Mặt trước phong bì với tên Thiên Đức & Phương Anh, KHÔNG có sáp');
 
-  // C. State 2: The Falling Leaf Dance (Lá rơi đung đưa trái xong phải)
-  await evaluate(`window.sceneController.setProgress(0.28, true);`);
+  // C. State 2: Flight Spin (p = 0.25)
+  await evaluate(`window.sceneController.setProgress(0.25, true);`);
   await new Promise((r) => setTimeout(r, 200));
-  await captureState('v4_02a_falling_leaf_sway_left.png', 'Vũ điệu lá rơi: Phong bì đung đưa liệng mượt mà sang trái');
-
-  await evaluate(`window.sceneController.setProgress(0.40, true);`);
-  await new Promise((r) => setTimeout(r, 200));
-  await captureState('v4_02b_falling_leaf_sway_right.png', 'Vũ điệu lá rơi: Phong bì đung đưa liệng mượt mà sang phải, xoay mặt mở');
+  await captureState('v4_02_flight_spin.png', 'Phong bì bay lượn trên không trung');
 
   // D. State 3: Checkpoint Landing & Turn to Back Cover (p = 0.50) — Back Cover with Wax Seal!
   await evaluate(`window.sceneController.setProgress(0.50, true);`);
