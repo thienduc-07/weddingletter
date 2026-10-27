@@ -42,6 +42,8 @@ export class AmbientBackground {
     this.time = 0;
     this.progress = 0;
     this.targetProgress = 0;
+    this.fallingProgress = 0;
+    this.introFallingComplete = false;
 
     this.initParticles();
     this.initListeners();
@@ -52,7 +54,25 @@ export class AmbientBackground {
   }
 
   setScrollProgress(p) {
-    this.targetProgress = Math.max(0, Math.min(1, p));
+    this.scrollProgress = Math.max(0, Math.min(1, p));
+    this.updateTarget();
+  }
+
+  setFallingProgress(u, immediate = false) {
+    this.fallingProgress = Math.max(0, Math.min(1, u));
+    this.updateTarget();
+    if (immediate) {
+      this.progress = this.targetProgress;
+    }
+    if (u >= 1.0) {
+      this.introFallingComplete = true;
+    }
+  }
+
+  updateTarget() {
+    const fT = this.fallingProgress !== undefined ? this.fallingProgress : 1.0;
+    const baseP = fT * 0.54;
+    this.targetProgress = Math.max(baseP, (this.scrollProgress || 0) * 0.54);
   }
 
   initParticles() {

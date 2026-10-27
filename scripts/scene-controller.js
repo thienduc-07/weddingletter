@@ -50,119 +50,6 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-/**
- * Natural Falling Leaf Dynamics & Glide Landing (Stages A -> D + Section 4 Landing Glide)
- * Maps parameter u in [0, 1] across the pre-open flight journey (p in [0.14, 0.49]).
- * 
- * 1. Stage A: Initial swoop & lean LEFT with large amplitude (rotZ -> +14.9°, X: 1.8 -> -0.45)
- * 2. Stage B: Swoop & lean RIGHT with large amplitude (rotZ -> -12.6°, X: -0.45 -> +0.38)
- * 3. Stage C: Swoop & lean LEFT with medium amplitude (rotZ -> +8.0°, X: +0.38 -> -0.22)
- * 4. Stage D1: Swoop & lean RIGHT with small amplitude (rotZ -> -6.3°, X: -0.22 -> +0.22)
- * 5. Stage D2: Subtle left ripple, settling into slight right tilt at X = +0.26, rotZ = -5.2°
- * 6. Section 4 (Crucial Landing Glide):
- *    Glides gently from right to left (X: +0.26 -> 0.0), levels out tilt (-5.2° -> 0°),
- *    descends onto table runner (Y: +0.02 -> -0.24), decelerating with zero residual velocity.
- */
-function getFallingLeafPose(u) {
-  u = Math.max(0, Math.min(1, u));
-
-  let posX, posY, posZ;
-  let rotX, rotY, rotZ;
-  let envRotY;
-  let shadowOpacity;
-
-  // Envelope flip: turns 0 -> Math.PI smoothly between u = 0.15 and 0.65.
-  // Finishes completely before u = 0.72 so that during the final landing glide,
-  // the envelope is already facing the viewer with its wax seal. Zero snap or flip during landing!
-  if (u < 0.15) {
-    envRotY = 0;
-  } else if (u <= 0.65) {
-    const ft = (u - 0.15) / 0.50;
-    envRotY = easeInOutCubic(ft) * Math.PI;
-  } else {
-    envRotY = Math.PI;
-  }
-
-  // stationeryGroup rotation Y aligns smoothly from -0.35 to 0.0 without any 360-degree rolls
-  const yawT = Math.min(1, u / 0.65);
-  rotY = lerp(-0.35, 0.0, easeInOutCubic(yawT));
-
-  if (u <= 0.72) {
-    // Oscillating falling leaf stage with decaying amplitude (u = 0.00 -> 0.72)
-    if (u <= 0.18) {
-      // Swing 1: u in [0.00, 0.18] -> Lean & swoop to LEFT (biên độ lớn)
-      const s = u / 0.18;
-      const ease = easeInOutCubic(s);
-      posX = lerp(1.8, -0.45, ease);
-      posY = lerp(1.1, 0.75, ease);
-      posZ = lerp(-0.6, -0.35, ease);
-      rotX = lerp(0.28, 0.18, ease) + Math.sin(s * Math.PI) * 0.08;
-      rotZ = lerp(0.14, 0.26, ease); // Leans left (+Z in Three.js tilts top left in screen view)
-    } else if (u <= 0.36) {
-      // Swing 2: u in [0.18, 0.36] -> Swoop to RIGHT (biên độ lớn)
-      const s = (u - 0.18) / 0.18;
-      const ease = easeInOutCubic(s);
-      posX = lerp(-0.45, 0.38, ease);
-      posY = lerp(0.75, 0.45, ease);
-      posZ = lerp(-0.35, -0.20, ease);
-      rotX = lerp(0.18, 0.12, ease) + Math.sin(s * Math.PI) * 0.06;
-      rotZ = lerp(0.26, -0.22, ease); // Leans right
-    } else if (u <= 0.50) {
-      // Swing 3: u in [0.36, 0.50] -> Swoop to LEFT (biên độ vừa)
-      const s = (u - 0.36) / 0.14;
-      const ease = easeInOutCubic(s);
-      posX = lerp(0.38, -0.22, ease);
-      posY = lerp(0.45, 0.22, ease);
-      posZ = lerp(-0.20, -0.10, ease);
-      rotX = lerp(0.12, 0.08, ease) + Math.sin(s * Math.PI) * 0.04;
-      rotZ = lerp(-0.22, 0.14, ease); // Leans left
-    } else if (u <= 0.62) {
-      // Swing 4: u in [0.50, 0.62] -> Swoop to RIGHT (biên độ nhỏ)
-      const s = (u - 0.50) / 0.12;
-      const ease = easeInOutCubic(s);
-      posX = lerp(-0.22, 0.22, ease);
-      posY = lerp(0.22, 0.08, ease);
-      posZ = lerp(-0.10, -0.04, ease);
-      rotX = lerp(0.08, 0.06, ease) + Math.sin(s * Math.PI) * 0.03;
-      rotZ = lerp(0.14, -0.11, ease); // Leans right
-    } else {
-      // Swing 5: u in [0.62, 0.72] -> Subtle left ripple, settling tilted gently to the right at X = +0.26
-      const s = (u - 0.62) / 0.10;
-      const ease = easeInOutCubic(s);
-      const ripple = Math.sin(s * Math.PI) * 0.08;
-      posX = lerp(0.22, 0.26, ease) - ripple;
-      posY = lerp(0.08, 0.02, ease);
-      posZ = lerp(-0.04, -0.01, ease);
-      rotX = lerp(0.06, 0.05, ease);
-      rotZ = lerp(-0.11, -0.09, ease) + ripple * 0.8; // Ends tilted gently to the right (-0.09 rad)
-    }
-    shadowOpacity = lerp(0.0, 0.20, Math.max(0, (u - 0.40) / 0.32));
-
-  } else {
-    // =========================================================================
-    // STAGE 5 (Phần 4): TỪ BÊN PHẢI TRƯỢT QUA BÊN TRÁI VÀ ĐÁP XUỐNG (u = 0.72 -> 1.00)
-    // =========================================================================
-    const s = (u - 0.72) / 0.28;
-    // Deceleration curve with zero residual velocity at s = 1.0 (touchdown)
-    const ease = 1 - Math.pow(1 - s, 2.6);
-
-    // 4.1 & 4.2: Starts at posX = +0.26 (tilted right), glides clearly across to 0.0
-    posX = lerp(0.26, 0.0, ease);
-    // 4.2: Descends from +0.02 down to resting surface -0.24 on the banquet runner
-    posY = lerp(0.02, -0.24, ease);
-    posZ = lerp(-0.01, 0.0, ease);
-
-    // 4.2 & 4.3: Smoothly levels out tilt and pitch to perfectly upright
-    rotX = lerp(0.05, 0.0, ease);
-    rotZ = lerp(-0.09, 0.0, ease);
-
-    // Grounding contact shadow intensifies as it touches down
-    shadowOpacity = lerp(0.20, 0.72, ease);
-  }
-
-  return { posX, posY, posZ, rotX, rotY, rotZ, envRotY, shadowOpacity };
-}
-
 export class SceneController {
   constructor(canvasContainer) {
     this.container = typeof canvasContainer === 'string'
@@ -175,10 +62,16 @@ export class SceneController {
     }
 
     // State Machine
-    // ARRIVING, SCROLL_DRAFT, CENTERING, CENTERED, HOLDING_SEAL, OPENING_ENVELOPE, ENVELOPE_OPEN, EXTRACTING_LETTER, UNFOLDING_LETTER, LETTER_REVEALED
-    this.state = 'ARRIVING';
+    // FALLING_INTRO, SETTLED, HOLDING_SEAL, OPENING_ENVELOPE, ENVELOPE_OPEN, EXTRACTING_LETTER, RELEASING_RIBBON, UNFOLDING_LETTER, LETTER_REVEALED
+    this.state = 'FALLING_INTRO';
     this.envelopeOpened = false;
     this.isReloading = false;
+
+    // Cinematic Pre-Interaction Falling Leaf Animation
+    this.introFalling = true;
+    this.introFallingTime = 0;
+    this.introFallingDuration = 3.6; // 3.6s total luxury trajectory
+    this.introFallingComplete = false;
 
     // Timeline variables
     this.scrollProgress = 0;       // 0 to 1 interpolated
@@ -433,10 +326,8 @@ export class SceneController {
 
     const startHolding = (e) => {
       if (this.envelopeOpened) return;
-      // If user interacts before envelope has landed, smoothly advance to settled checkpoint
-      if (this.scrollProgress < 0.49) {
-        this.targetScrollProgress = 0.50;
-        return;
+      if (!this.introFallingComplete) {
+        this.completeFallingLeaf();
       }
       if (e) {
         if (e.cancelable) e.preventDefault();
@@ -466,10 +357,6 @@ export class SceneController {
     if (this.renderer && this.renderer.domElement) {
       this.renderer.domElement.addEventListener('pointerdown', (e) => {
         if (this.envelopeOpened) return;
-        if (this.scrollProgress < 0.49) {
-          this.targetScrollProgress = 0.50;
-          return;
-        }
         this.pointerNdc.x = (e.clientX / window.innerWidth) * 2 - 1;
         this.pointerNdc.y = -(e.clientY / window.innerHeight) * 2 + 1;
         this.raycaster.setFromCamera(this.pointerNdc, this.camera);
@@ -542,6 +429,9 @@ export class SceneController {
     // Native continuous scroll listener with strict checkpoint enforcement & reverse re-locking
     window.addEventListener('scroll', () => {
       if (this.isReloading) return;
+      if (!this.introFallingComplete && window.scrollY > 5) {
+        this.completeFallingLeaf();
+      }
       const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
       if (scrollMax > 0) {
         let rawP = Math.max(0, Math.min(1, window.scrollY / scrollMax));
@@ -564,7 +454,10 @@ export class SceneController {
           }
           if (this.holdTrigger) {
             this.holdTrigger.style.display = '';
-            this.holdTrigger.classList.remove('completed', 'holding', 'visible');
+            this.holdTrigger.classList.remove('completed', 'holding');
+            if (this.introFallingComplete) {
+              this.holdTrigger.classList.add('visible');
+            }
           }
         }
 
@@ -676,9 +569,169 @@ export class SceneController {
   }
 
   /**
+   * Evaluates the cinematic 5-stage falling leaf trajectory for normalized time u in [0, 1]
+   * Trình tự bắt buộc:
+   * 1. Nghiêng trái mạnh nhất (100% biên độ, ~15°)
+   * 2. Nghiêng phải, nhẹ hơn lần đầu (~70% biên độ, ~-10°)
+   * 3. Dao động giảm dần: Trái (~42%) -> Phải (~21%) -> Nhịp cuối bias phải (~10%, ~-1.4°)
+   * 4. Từ bên phải trượt qua bên trái -> giảm tốc -> đáp xuống -> dừng hẳn tại chính giữa (0, -0.24, 0)
+   * 5. Hiển thị trạng thái chờ tương tác (dòng hướng dẫn "ẤN VÀ GIỮ CON DẤU SÁP ĐỂ MỞ" xuất hiện)
+   */
+  getFallingLeafTransform(u) {
+    u = Math.max(0, Math.min(1, u));
+    const keys = [
+      { u: 0.00, x:  0.000, y:  2.350, z: -0.30, rx: 0.18, rz:  0.000, sh: 0.00 },
+      { u: 0.09, x: -0.220, y:  1.950, z: -0.25, rx: 0.16, rz:  0.150, sh: 0.00 },
+      { u: 0.18, x: -0.380, y:  1.550, z: -0.20, rx: 0.14, rz:  0.260, sh: 0.00 }, // Peak 1: Left 100% (~15 deg)
+      { u: 0.28, x: -0.050, y:  1.200, z: -0.15, rx: 0.12, rz:  0.040, sh: 0.00 },
+      { u: 0.38, x:  0.280, y:  0.880, z: -0.10, rx: 0.10, rz: -0.180, sh: 0.00 }, // Peak 2: Right 70% (~-10 deg)
+      { u: 0.47, x:  0.060, y:  0.620, z: -0.06, rx: 0.08, rz: -0.030, sh: 0.05 },
+      { u: 0.56, x: -0.160, y:  0.400, z: -0.03, rx: 0.06, rz:  0.110, sh: 0.18 }, // Peak 3: Left 42% (~6.3 deg)
+      { u: 0.64, x: -0.020, y:  0.230, z: -0.02, rx: 0.05, rz:  0.015, sh: 0.32 },
+      { u: 0.72, x:  0.090, y:  0.090, z: -0.01, rx: 0.04, rz: -0.055, sh: 0.45 }, // Peak 4: Right 21% (~-3.2 deg)
+      { u: 0.79, x:  0.020, y: -0.020, z:  0.00, rx: 0.03, rz:  0.000, sh: 0.54 },
+      { u: 0.84, x:  0.055, y: -0.100, z:  0.00, rx: 0.025, rz: -0.025, sh: 0.60 }, // Peak 5: Subtle right bias (~-1.4 deg)
+      { u: 0.92, x:  0.018, y: -0.205, z:  0.00, rx: 0.010, rz: -0.007, sh: 0.68 }, // Stage 4: Gliding left, descending
+      { u: 1.00, x:  0.000, y: -0.240, z:  0.00, rx: 0.000, rz:  0.000, sh: 0.72 }  // Stage 5: Landed at exact center
+    ];
+
+    let i = 0;
+    while (i < keys.length - 1 && keys[i + 1].u < u) i++;
+    if (i >= keys.length - 1) {
+      const k = keys[keys.length - 1];
+      return { posX: k.x, posY: k.y, posZ: k.z, rotX: k.rx, rotY: 0, rotZ: k.rz, shadowOpacity: k.sh };
+    }
+
+    const k0 = keys[Math.max(0, i - 1)];
+    const k1 = keys[i];
+    const k2 = keys[i + 1];
+    const k3 = keys[Math.min(keys.length - 1, i + 2)];
+
+    const t = (u - k1.u) / (k2.u - k1.u);
+    const t2 = t * t;
+    const t3 = t2 * t;
+
+    const cr = (p0, p1, p2, p3) => {
+      return 0.5 * (
+        (2 * p1) +
+        (-p0 + p2) * t +
+        (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+        (-p0 + 3 * p1 - 3 * p2 + p3) * t3
+      );
+    };
+
+    return {
+      posX: cr(k0.x, k1.x, k2.x, k3.x),
+      posY: cr(k0.y, k1.y, k2.y, k3.y),
+      posZ: cr(k0.z, k1.z, k2.z, k3.z),
+      rotX: cr(k0.rx, k1.rx, k2.rx, k3.rx),
+      rotY: 0,
+      rotZ: cr(k0.rz, k1.rz, k2.rz, k3.rz),
+      shadowOpacity: Math.max(0, Math.min(0.72, cr(k0.sh, k1.sh, k2.sh, k3.sh)))
+    };
+  }
+
+  /**
+   * Applies the falling leaf transform to stationeryGroup and scene elements
+   */
+  applyFallingLeaf(u) {
+    const tf = this.getFallingLeafTransform(u);
+
+    // Entire envelope and wax seal move as one rigid unified 3D object via stationeryGroup
+    this.stationeryGroup.position.set(tf.posX, tf.posY, tf.posZ);
+    this.stationeryGroup.rotation.set(tf.rotX, 0, tf.rotZ);
+
+    // Wax seal faces camera constantly throughout the entire falling animation (no flip, no spin)
+    this.envelope.group.visible = true;
+    this.envelope.group.position.set(0, 0, 0);
+    this.envelope.group.rotation.set(0, Math.PI, 0);
+    this.envelope.setFlapAngle(0);
+    this.envelope.setSealOpacity(1.0);
+
+    // Scroll remains hidden inside sealed envelope
+    this.scroll.group.visible = false;
+    this.scroll.group.position.set(0, -0.15, 0.025);
+    this.scroll.group.rotation.set(0, 0, 0);
+    this.scroll.setUntying(0.0);
+    this.scroll.setUnroll(0.0);
+
+    // Table contact shadow intensifies as envelope nears the banquet runner
+    if (this.tableContactShadow) {
+      this.tableContactShadow.material.opacity = tf.shadowOpacity;
+    }
+
+    // Camera tracks slightly down toward table surface
+    const envCamZ = this.getEnvelopeCameraZ();
+    this.baseCamX = 0;
+    this.baseCamY = -0.20 * Math.min(1.0, u * 1.15);
+    this.baseCamZ = envCamZ * (7.2 / 7.5);
+    this.baseLookY = -0.20 * Math.min(1.0, u * 1.15);
+
+    // Coordinate ambient background vertical pan from sky down to banquet table
+    if (window.ambientBackground) {
+      window.ambientBackground.setFallingProgress(u);
+    }
+
+    // Prompt remains hidden during falling movement
+    if (this.holdTrigger) {
+      this.holdTrigger.classList.remove('visible');
+    }
+  }
+
+  /**
+   * Safely settles the falling animation to the final resting pose
+   */
+  completeFallingLeaf() {
+    this.introFalling = false;
+    this.introFallingComplete = true;
+
+    // Resting pose at exact center (matching reference photo)
+    this.stationeryGroup.position.set(0, -0.24, 0);
+    this.stationeryGroup.rotation.set(0, 0, 0);
+
+    this.envelope.group.visible = true;
+    this.envelope.group.position.set(0, 0, 0);
+    this.envelope.group.rotation.set(0, Math.PI, 0);
+    this.envelope.setFlapAngle(0);
+    this.envelope.setSealOpacity(1.0);
+
+    this.scroll.group.visible = false;
+    this.scroll.group.position.set(0, -0.15, 0.025);
+    this.scroll.group.rotation.set(0, 0, 0);
+    this.scroll.setUntying(0.0);
+    this.scroll.setUnroll(0.0);
+
+    if (this.tableContactShadow) {
+      this.tableContactShadow.material.opacity = 0.72;
+    }
+
+    const envCamZ = this.getEnvelopeCameraZ();
+    this.baseCamX = 0;
+    this.baseCamY = -0.20;
+    this.baseCamZ = envCamZ * (7.2 / 7.5);
+    this.baseLookY = -0.20;
+
+    this.state = 'SETTLED';
+
+    // Ensure ambient background is settled on the banquet table
+    if (window.ambientBackground) {
+      window.ambientBackground.setFallingProgress(1.0, true);
+    }
+
+    // Show hold prompt now that landing is complete
+    if (this.holdTrigger && !this.envelopeOpened) {
+      this.holdTrigger.classList.add('visible');
+      this.updateSealTriggerPosition();
+    }
+  }
+
+  /**
    * Programmatic progress setter for automated testing & verification
    */
   setProgress(p, immediate = false) {
+    if (!this.introFallingComplete) {
+      this.completeFallingLeaf();
+    }
     this.targetScrollProgress = Math.max(0, Math.min(1, p));
     if (immediate) {
       this.scrollProgress = this.targetScrollProgress;
@@ -716,7 +769,19 @@ export class SceneController {
     }
 
     // 3. Update Choreography & State Machine (determines base camera coordinates & physical transforms)
-    this.applyChoreography(this.scrollProgress, now, dt);
+    if (!this.introFallingComplete) {
+      if (!this.freezeFalling) {
+        this.introFallingTime += dt;
+      }
+      const u = Math.min(1.0, this.introFallingTime / this.introFallingDuration);
+      this.applyFallingLeaf(u);
+      this.updateCornerHUD(0);
+      if (u >= 1.0 && !this.freezeFalling) {
+        this.completeFallingLeaf();
+      }
+    } else {
+      this.applyChoreography(this.scrollProgress, now, dt);
+    }
 
     // 4. Coordinated Camera Tracking with Damped Mouse Parallax (Section D3)
     const baseZ = this.baseCamZ || 7.5;
@@ -735,7 +800,7 @@ export class SceneController {
     }
 
     // 5. Keep seal trigger in sync with 3D button position
-    if (this.state === 'CENTERED' || this.state === 'HOLDING_SEAL' || this.state === 'SETTLED' || this.state === 'LANDING' || this.state === 'FALLING_LEAF' || this.state === 'OPENING_ENVELOPE') {
+    if (this.state === 'CENTERED' || this.state === 'HOLDING_SEAL' || this.state === 'SETTLED' || this.state === 'LANDING' || this.state === 'OPENING_ENVELOPE') {
       this.updateSealTriggerPosition();
     }
 
@@ -781,119 +846,14 @@ export class SceneController {
     // Base camera framing defaults
     const envCamZ = this.getEnvelopeCameraZ();
     this.baseCamX = 0;
-    this.baseCamY = 0;
-    this.baseCamZ = envCamZ;
-    this.baseLookY = 0;
+    this.baseCamY = -0.20;
+    this.baseCamZ = envCamZ * (7.2 / 7.5);
+    this.baseLookY = -0.20;
 
     // =========================================================================
-    // PHASE 1: THE ARRIVAL (p = 0.00 -> 0.14)
-    // =========================================================================
-    if (p < 0.14) {
-      this.state = 'ARRIVING';
-      const t = p / 0.14;
-      const ease = easeInOutCubic(t);
-
-      // Curved 3D flight trajectory from upper-right entering the European garden scene
-      this.stationeryGroup.position.set(
-        lerp(3.2, 1.8, ease),
-        lerp(2.2, 1.1, ease),
-        lerp(-1.2, -0.6, ease)
-      );
-
-      // Smooth, continuous initial tilt and banking
-      this.stationeryGroup.rotation.set(
-        lerp(0.40, 0.28, t) + Math.sin(t * Math.PI) * 0.15,
-        lerp(-0.55, -0.35, t),
-        lerp(0.22, 0.14, t) + Math.sin(t * Math.PI) * 0.10
-      );
-
-      // Sealed envelope state
-      this.envelope.group.visible = true;
-      this.envelope.group.position.set(0, 0, 0);
-      this.envelope.group.rotation.set(0, 0, 0);
-      this.envelope.setFlapAngle(0);
-      this.envelope.setSealOpacity(1.0);
-
-      // Scroll is sealed inside envelope (strictly hidden until seal is broken)
-      this.scroll.group.visible = false;
-      this.scroll.group.position.set(0, -0.15, 0.025);
-      this.scroll.group.rotation.set(0, 0, 0);
-      this.scroll.setUntying(0.0);
-      this.scroll.setUnroll(0.0);
-
-      // Table contact shadow invisible during flight
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
-
-      // Hide interactive seal trigger during flight
-      if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
-
-      this.updateCornerHUD(p);
-      return;
-    }
-
-    // =========================================================================
-    // PHASE 2 & 3: THE FALLING LEAF & GLIDE LANDING (p = 0.14 -> 0.49)
-    // Continuous natural falling leaf with decaying amplitude + right-to-left glide landing
-    // =========================================================================
-    if (p < 0.49) {
-      const u = (p - 0.14) / 0.35;
-      this.state = u <= 0.72 ? 'FALLING_LEAF' : 'LANDING';
-
-      const pose = getFallingLeafPose(u);
-
-      this.stationeryGroup.position.set(pose.posX, pose.posY, pose.posZ);
-      this.stationeryGroup.rotation.set(pose.rotX, pose.rotY, pose.rotZ);
-
-      // Camera smoothly tracks down toward banquet table without any sudden rotation
-      const camEase = easeInOutCubic(Math.min(1, Math.max(0, (u - 0.20) / 0.70)));
-      this.baseCamY = lerp(0.0, -0.20, camEase);
-      this.baseCamZ = lerp(envCamZ, envCamZ * (7.2 / 7.5), camEase);
-      this.baseLookY = lerp(0.0, -0.20, camEase);
-
-      // Grounding contact shadow intensifies smoothly as stationery touches down
-      if (this.tableContactShadow) {
-        this.tableContactShadow.material.opacity = pose.shadowOpacity;
-      }
-
-      this.envelope.group.visible = true;
-      this.envelope.group.position.set(0, 0, 0);
-      this.envelope.group.rotation.set(0, pose.envRotY, 0);
-      this.envelope.setFlapAngle(0);
-      this.envelope.setSealOpacity(1.0);
-
-      // Strict reverse scroll re-lock: If user returns to p < 0.48, require hold again!
-      if (this.envelopeOpened) {
-        this.envelopeOpened = false;
-        this.openingProgress = 0.0;
-        this.holdProgress = 0.0;
-        if (this.holdMeter) this.holdMeter.style.strokeDashoffset = `${this.dashMax}`;
-        if (this.holdTrigger) {
-          this.holdTrigger.classList.remove('completed', 'holding');
-        }
-      }
-
-      // Scroll remains securely hidden inside sealed envelope
-      this.scroll.group.visible = false;
-      this.scroll.group.position.set(0, -0.15, 0.025);
-      this.scroll.group.rotation.set(0, 0, 0);
-      this.scroll.setUntying(0.0);
-      this.scroll.setUnroll(0.0);
-
-      // Hide interactive seal trigger during flight & glide
-      if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
-
-      this.updateCornerHUD(p);
-      return;
-    }
-
-    // =========================================================================
-    // PHASE 4: THE SEAL CHECKPOINT (p == 0.50, Envelope Sealed)
+    // PRE-INTERACTION SETTLED / SEAL CHECKPOINT (p <= 0.50, Envelope Sealed)
     // =========================================================================
     if (!this.envelopeOpened) {
-      this.baseCamY = -0.20;
-      this.baseCamZ = envCamZ * (7.2 / 7.5);
-      this.baseLookY = -0.20;
-
       // Docked stably on the banquet table
       this.stationeryGroup.position.set(0, -0.24, 0);
       this.stationeryGroup.rotation.set(0, 0, 0);
@@ -970,7 +930,9 @@ export class SceneController {
         if (this.holdTrigger) {
           this.holdTrigger.style.display = '';
           this.holdTrigger.classList.remove('completed', 'holding');
-          this.holdTrigger.classList.add('visible');
+          if (this.introFallingComplete) {
+            this.holdTrigger.classList.add('visible');
+          }
         }
       }
 
