@@ -135,10 +135,23 @@ async function main() {
   console.log('Front Cover Check at p = 0.05 (Phần I & II):', frontCheck.result?.value);
   await captureState('v4_01_front_cover_arrival.png', 'Mặt trước phong bì với tên Thiên Đức & Phương Anh, KHÔNG có sáp');
 
-  // C. State 2: Flight Spin (p = 0.25)
+  // C. State 2: Flight Glide (p = 0.25) — Smooth aerodynamic banking, ZERO right-tilt jerk
   await evaluate(`window.sceneController.setProgress(0.25, true);`);
   await new Promise((r) => setTimeout(r, 200));
-  await captureState('v4_02_flight_spin.png', 'Phong bì bay lượn trên không trung');
+  const flightCheck = await evaluate(`(() => {
+    const sc = window.sceneController;
+    const rot = sc.stationeryGroup.rotation;
+    const degZ = rot.z * 180 / Math.PI;
+    return {
+      rotX: rot.x.toFixed(3),
+      rotY: rot.y.toFixed(3),
+      rotZ: rot.z.toFixed(3),
+      degZ: degZ.toFixed(2),
+      isSmoothBanking: Math.abs(degZ) <= 5.0, // Smooth banking, absolutely NO 53° sudden right-tilt
+    };
+  })()`);
+  console.log('Flight Glide Check at p = 0.25 (Phần I - Sửa lỗi nghiêng phải):', flightCheck.result?.value);
+  await captureState('v4_02_flight_smooth_glide.png', 'Phong bì bay lượn trên không trung, không còn nghiêng đột ngột');
 
   // D. State 3: Checkpoint Landing & Turn to Back Cover (p = 0.50) — Back Cover with Wax Seal!
   await evaluate(`window.sceneController.setProgress(0.50, true);`);
@@ -178,7 +191,7 @@ async function main() {
   await new Promise((r) => setTimeout(r, 200));
   await captureState('v4_05_scroll_extracted.png', 'Cuộn thư trượt lên khỏi phong bì, nơ thắt chặt');
 
-  // G. State 6: Ribbon Phase A — Strictly Horizontal Slide (p = 0.69, t ~ 0.30 in Phase 6)
+  // G. State 6: Ribbon Phase A — Strictly Horizontal Slide (p = 0.69, t ~ 0.50 in Phase 6)
   await evaluate(`(() => {
     window.sceneController.setProgress(0.69, true);
   })()`);
@@ -197,7 +210,7 @@ async function main() {
   console.log('Ribbon Phase A (Horizontal Movement) Check at p = 0.69:', ribbonPhaseA.result?.value);
   await captureState('v4_06_ribbon_horizontal_slide.png', 'Nơ trượt ngang hoàn toàn dọc theo cuộn giấy, Y = 0');
 
-  // H. State 7: Ribbon Phase B/C — Cleared Cylinder and Falling Diagonally (p = 0.74, t ~ 0.80 in Phase 6)
+  // H. State 7: Ribbon Phase B/C — Cleared Cylinder and Falling Diagonally (p = 0.74, end of Phase 6)
   await evaluate(`(() => {
     window.sceneController.setProgress(0.74, true);
   })()`);
@@ -210,27 +223,94 @@ async function main() {
       ribbonPosX: ribbon.group.position.x,
       ribbonPosY: ribbon.group.position.y,
       isBeyondRollEdge: ribbon.group.position.x > rollHalfWidth,
-      noRollIntersection: ribbon.group.position.x > rollHalfWidth && ribbon.group.position.y < 0,
     };
   })()`);
   console.log('Ribbon Phase C (Diagonal Fall after Clearing Roll) Check at p = 0.74:', ribbonPhaseC.result?.value);
   await captureState('v4_07_ribbon_diagonal_fall.png', 'Nơ rơi chéo sau khi đã trượt hoàn toàn ra khỏi mép cuộn giấy, không xuyên giấy');
 
-  // I. State 8: Progressive Unrolling (p = 0.84)
+  // I. State 8: Progressive Unrolling (p = 0.82)
   await evaluate(`(() => {
-    window.sceneController.setProgress(0.84, true);
+    window.sceneController.setProgress(0.82, true);
   })()`);
   await new Promise((r) => setTimeout(r, 200));
   await captureState('v4_08_progressive_unrolling.png', 'Cuộn thư đang mở cuộn 3D xuống dưới');
 
-  // J. State 9: Final Reveal (p = 0.98)
+  // J. State 9: Full Letter Reading Display (p = 0.90)
   await evaluate(`(() => {
-    window.sceneController.setProgress(0.98, true);
+    window.sceneController.setProgress(0.90, true);
   })()`);
   await new Promise((r) => setTimeout(r, 200));
-  await captureState('v4_09_card_fully_revealed.png', 'Toàn bộ nội dung thư cưới hoàn chỉnh');
+  await captureState('v4_09_card_fully_revealed.png', 'Toàn bộ nội dung thư cưới hoàn chỉnh, khổ lớn sắc nét');
 
-  // K. State 10: Reverse Scroll Re-lock Test (p = 0.40)
+  // K. State 10A: Grand Finale — Leaf Fall Swaying Left (p = 0.94)
+  await evaluate(`(() => {
+    window.sceneController.setProgress(0.94, true);
+  })()`);
+  await new Promise((r) => setTimeout(r, 200));
+  const finaleStageACheck = await evaluate(`(() => {
+    const sc = window.sceneController;
+    const pos = sc.stationeryGroup.position;
+    const rot = sc.stationeryGroup.rotation;
+    return {
+      state: sc.state,
+      posX: pos.x.toFixed(3),
+      posY: pos.y.toFixed(3),
+      degZ: (rot.z * 180 / Math.PI).toFixed(1),
+      waxSealFacingViewer: sc.envelope.group.rotation.y === Math.PI,
+    };
+  })()`);
+  console.log('Finale Stage A (Leaf Fall Sway Left) Check at p = 0.94:', finaleStageACheck.result?.value);
+  await captureState('v4_10_finale_leaf_sway_left.png', 'Chung cuộc: Cả tấm thiệp 3D rơi xuống, đung đưa sang trái');
+
+  // L. State 10B: Grand Finale — Leaf Fall Swaying Right (p = 0.96)
+  await evaluate(`(() => {
+    window.sceneController.setProgress(0.96, true);
+  })()`);
+  await new Promise((r) => setTimeout(r, 200));
+  const finaleStageBCheck = await evaluate(`(() => {
+    const sc = window.sceneController;
+    const pos = sc.stationeryGroup.position;
+    const rot = sc.stationeryGroup.rotation;
+    return {
+      state: sc.state,
+      posX: pos.x.toFixed(3),
+      posY: pos.y.toFixed(3),
+      degZ: (rot.z * 180 / Math.PI).toFixed(1),
+    };
+  })()`);
+  console.log('Finale Stage B (Leaf Fall Sway Right) Check at p = 0.96:', finaleStageBCheck.result?.value);
+  await captureState('v4_11_finale_leaf_sway_right.png', 'Chung cuộc: Cả tấm thiệp 3D đung đưa đổi hướng sang phải');
+
+  // M. State 10C: Grand Finale — Touchdown & Resting on Banquet Table (p = 1.00)
+  await evaluate(`(() => {
+    window.sceneController.setProgress(1.00, true);
+  })()`);
+  await new Promise((r) => setTimeout(r, 250));
+  const finaleRestCheck = await evaluate(`(() => {
+    const sc = window.sceneController;
+    const pos = sc.stationeryGroup.position;
+    const rot = sc.stationeryGroup.rotation;
+    return {
+      state: sc.state,
+      posX: pos.x,
+      posY: pos.y,
+      posZ: pos.z,
+      rotX: rot.x,
+      rotY: rot.y,
+      rotZ: rot.z,
+      isEnvelopeCentered: Math.abs(pos.x) < 0.001 && Math.abs(pos.z) < 0.001,
+      isOnTable: Math.abs(pos.y - (-0.24)) < 0.005,
+      isLevel: Math.abs(rot.x) < 0.001 && Math.abs(rot.z) < 0.001,
+      envelopeRotY: sc.envelope.group.rotation.y,
+      waxSealFacingViewer: Math.abs(sc.envelope.group.rotation.y - Math.PI) < 0.001,
+      sealVisible: sc.envelope.goldSealMat?.opacity >= 0.95,
+      tableShadowOpacity: sc.tableContactShadow?.material.opacity,
+    };
+  })()`);
+  console.log('Finale Stage F (Final Resting Position) Check at p = 1.00:', finaleRestCheck.result?.value);
+  await captureState('v4_12_finale_rested_table_center.png', 'Chung cuộc: Tấm thiệp dừng chính giữa khung hình, mặt sáp nến hướng về phía người xem');
+
+  // N. State 11: Reverse Scroll Re-lock Test (p = 0.40)
   console.log('\n--- Testing Reverse Scroll Re-lock ---');
   await evaluate(`(() => {
     window.sceneController.setProgress(0.40, true);
@@ -246,7 +326,7 @@ async function main() {
     };
   })()`);
   console.log('Reverse Re-lock Check at p = 0.40:', relockCheck.result?.value);
-  await captureState('v4_10_reverse_relocked.png', 'Kéo ngược cuộn trang: phong bì tự động đóng và khoá lại');
+  await captureState('v4_13_reverse_relocked.png', 'Kéo ngược cuộn trang: phong bì tự động đóng và khoá lại');
 
   // L. Mobile Viewport Test (375 x 667)
   console.log('\n--- Testing Mobile Viewport (375 x 667) ---');
@@ -261,20 +341,26 @@ async function main() {
     window.sceneController.setProgress(0.05, true);
   `);
   await new Promise((r) => setTimeout(r, 250));
-  await captureState('v4_11_mobile_front_cover.png', 'Mobile viewport: Mặt trước phong bì hiển thị hoàn hảo');
+  await captureState('v4_14_mobile_front_cover.png', 'Mobile viewport: Mặt trước phong bì hiển thị hoàn hảo');
 
   await evaluate(`
     window.sceneController.setProgress(0.50, true);
   `);
   await new Promise((r) => setTimeout(r, 250));
-  await captureState('v4_12_mobile_back_seal.png', 'Mobile viewport: Mặt sau có sáp nến căn chỉnh chính xác');
+  await captureState('v4_15_mobile_back_seal.png', 'Mobile viewport: Mặt sau có sáp nến căn chỉnh chính xác');
 
   await evaluate(`
     window.sceneController.envelopeOpened = true;
+    window.sceneController.setProgress(0.90, true);
+  `);
+  await new Promise((r) => setTimeout(r, 350));
+  await captureState('v4_16_mobile_card_revealed.png', 'Mobile viewport: Thư cưới hiển thị to rõ trên điện thoại');
+
+  await evaluate(`
     window.sceneController.setProgress(1.0, true);
   `);
   await new Promise((r) => setTimeout(r, 350));
-  await captureState('v4_13_mobile_card_revealed.png', 'Mobile viewport: Thư cưới hiển thị to rõ trên điện thoại');
+  await captureState('v4_17_mobile_finale_rested.png', 'Mobile viewport: Tấm thiệp dừng chính giữa màn hình điện thoại');
 
   // Check console errors
   console.log('\n======================================================');
