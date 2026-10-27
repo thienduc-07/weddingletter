@@ -81,3 +81,4 @@ Validated test suite covers 10 critical states:
 10. `v2_10_mobile_revealed.png`: Responsive framing on mobile ($390 \times 844$) with zero clipping.
 11. **Console health**: **0 runtime errors**.
 # weddingletter
+# weddingletter
