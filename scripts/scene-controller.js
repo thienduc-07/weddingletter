@@ -664,28 +664,29 @@ export class SceneController {
     this.baseLookY = 0;
 
     // =========================================================================
-    // PHASE 1: THE ARRIVAL (p = 0.00 -> 0.14)
+    // PHASE 1: THE HIGH SKY ARRIVAL (p = 0.00 -> 0.16)
+    // Envelope glides gracefully down from upper-right, front cover visible
     // =========================================================================
-    if (p < 0.14) {
+    if (p < 0.16) {
       this.state = 'ARRIVING';
-      const t = p / 0.14;
+      const t = p / 0.16;
       const ease = easeInOutCubic(t);
 
-      // Curved 3D flight trajectory from upper-right entering the European garden scene
+      // Curved aerial descent into the European wedding garden scene
       this.stationeryGroup.position.set(
-        lerp(3.2, 1.8, ease),
-        lerp(2.2, 1.1, ease),
-        lerp(-1.2, -0.6, ease)
+        lerp(2.8, 1.4, ease),
+        lerp(2.0, 0.90, ease),
+        lerp(-1.0, -0.45, ease)
       );
 
-      // Smooth, continuous initial tilt and banking
+      // Smooth, natural aerodynamic flight pitch and gentle bank
       this.stationeryGroup.rotation.set(
-        lerp(0.40, 0.28, t) + Math.sin(t * Math.PI) * 0.15,
-        lerp(-0.55, -0.35, t),
-        lerp(0.22, 0.14, t) + Math.sin(t * Math.PI) * 0.10
+        lerp(0.32, 0.20, ease),
+        lerp(-0.32, -0.15, ease),
+        lerp(0.16, 0.06, ease)
       );
 
-      // Sealed envelope state
+      // Envelope sealed, front cover ("Thiên Đức & Phương Anh") facing viewer
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
       this.envelope.group.rotation.set(0, 0, 0);
@@ -699,10 +700,7 @@ export class SceneController {
       this.scroll.setUntying(0.0);
       this.scroll.setUnroll(0.0);
 
-      // Table contact shadow invisible during flight
       if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
-
-      // Hide interactive seal trigger during flight
       if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
 
       this.updateCornerHUD(p);
@@ -710,97 +708,71 @@ export class SceneController {
     }
 
     // =========================================================================
-    // PHASE 2: THE SPIN (p = 0.14 -> 0.36)
+    // PHASE 2 & 3: THE FALLING LEAF DESCENT & LANDING (p = 0.16 -> 0.485)
+    // "kiểu rơi theo lá rơi: đung đưa trái xong phải xong rồi chậm dần rồi mới dừng lại hẳn"
+    // "kết thúc khi mà tới cái mặt mở phong bì ra á" (reveals back cover with wax seal)
     // =========================================================================
-    if (p < 0.36) {
-      this.state = 'SCROLL_DRAFT';
-      const t = (p - 0.14) / 0.22;
+    if (p < 0.485) {
+      this.state = 'LANDING';
+      const t = (p - 0.16) / 0.325; // 0.0 -> 1.0
       const ease = easeInOutCubic(t);
 
-      // Swoops along graceful flight path toward banquet foreground
-      this.stationeryGroup.position.set(
-        lerp(1.8, 0.45, ease) + Math.sin(t * Math.PI) * 0.35,
-        lerp(1.1, 0.35, ease) - Math.sin(t * Math.PI) * 0.20,
-        lerp(-0.6, -0.2, ease)
-      );
+      // Physical falling leaf dynamics:
+      // 1. Decay envelope: oscillation amplitude decays smoothly to 0 at t = 1.0
+      const decay = Math.pow(1 - t, 1.4);
 
-      // Multi-axis 3D barrel rolls and banking rotations, landing cleanly facing forward
-      this.stationeryGroup.rotation.set(
-        lerp(0.28, 0.15, t) + Math.sin(t * Math.PI * 2) * 0.50,
-        lerp(-0.35, 0.0, ease) + t * Math.PI * 4, // 2 complete 360° rolls arriving at 0.0
-        lerp(0.14, 0.0, t) + Math.sin(t * Math.PI) * 0.25
-      );
+      // 2. Frequency slows down over time: "chậm dần"
+      // Using power curve so angular speed naturally decreases as envelope settles
+      const theta = 3.0 * Math.PI * (1 - Math.pow(1 - t, 1.25));
+      const sinTheta = Math.sin(theta);
 
-      // Sealed envelope state
+      // 3. Swaying left first, then right, then settling softly: "đung đưa trái xong phải"
+      // Cycle 1 (0 -> ~0.38): sinTheta > 0 => xSway < 0 (drifts to LEFT)
+      // Cycle 2 (~0.38 -> ~0.72): sinTheta < 0 => xSway > 0 (drifts to RIGHT)
+      // Cycle 3 (~0.72 -> 1.0): sinTheta > 0 => gentle micro-settle to 0
+      const xSway = -sinTheta * 0.65 * decay;
+
+      // 4. Aerodynamic banking: roll tilt perfectly matches lateral velocity and drift
+      const zSway = -sinTheta * 0.22 * decay;
+
+      // 5. Pitch flutter and subtle air cushion beneath paper
+      const xRotSway = Math.sin(theta * 2.0) * 0.05 * decay;
+      const ySway = Math.sin(theta * 1.5) * 0.015 * decay;
+      const zDepthSway = sinTheta * 0.05 * decay;
+
+      // Position: Smooth base trajectory + falling leaf flutter
+      const posX = lerp(1.4, 0.0, ease) + xSway;
+      const posY = lerp(0.90, -0.24, ease) + ySway;
+      const posZ = lerp(-0.45, 0.0, ease) + zDepthSway;
+      this.stationeryGroup.position.set(posX, posY, posZ);
+
+      // Orientation:
+      // Base rotation smoothly levels out to upright sitting posture (0, 0, 0)
+      const rotX = lerp(0.20, 0.0, ease) + xRotSway;
+      const rotY = lerp(-0.15, 0.0, ease);
+      const rotZ = lerp(0.06, 0.0, ease) + zSway;
+      this.stationeryGroup.rotation.set(rotX, rotY, rotZ);
+
+      // Smooth Yaw rotation: "kết thúc khi mà tới cái mặt mở phong bì ra á"
+      // Envelope gracefully turns 180° (0 -> Math.PI) throughout the falling leaf dance,
+      // perfectly presenting MẶT SAU (opening flap & Royal Burgundy Wax Seal) at touchdown!
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
-      this.envelope.group.rotation.set(0, 0, 0);
+      this.envelope.group.rotation.set(0, ease * Math.PI, 0);
       this.envelope.setFlapAngle(0);
       this.envelope.setSealOpacity(1.0);
-
-      // Scroll remains securely hidden inside sealed envelope
-      this.scroll.group.visible = false;
-      this.scroll.group.position.set(0, -0.15, 0.025);
-      this.scroll.group.rotation.set(0, 0, 0);
-      this.scroll.setUntying(0.0);
-      this.scroll.setUnroll(0.0);
-
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
-      if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
-
-      this.updateCornerHUD(p);
-      return;
-    }
-
-    // =========================================================================
-    // PHASE 3: THE LANDING (p = 0.36 -> 0.48)
-    // =========================================================================
-    if (p < 0.48) {
-      this.state = 'LANDING';
-      const t = (p - 0.36) / 0.12;
-      const ease = easeInOutCubic(t);
-
-      // Decelerates smoothly onto the banquet table surface at y = -0.24
-      const targetPosY = -0.24;
-      const posY = lerp(0.35, targetPosY, ease);
-      const posX = lerp(0.45, 0.0, ease);
-      const posZ = lerp(-0.2, 0.0, ease);
-
-      // Subtle, realistic physical landing settle bounce
-      let bounce = 0;
-      if (t > 0.65) {
-        const bT = (t - 0.65) / 0.35;
-        bounce = Math.sin(bT * Math.PI) * 0.024 * Math.exp(-bT * 3.5);
-      }
-
-      this.stationeryGroup.position.set(posX, posY + bounce, posZ);
-
-      // Rotations level out cleanly to upright sitting posture on the table
-      this.stationeryGroup.rotation.set(
-        lerp(0.20, 0.0, ease),
-        lerp(0.0, 0.0, ease),
-        lerp(0.05, 0.0, ease)
-      );
 
       // Camera gently tracks down toward banquet table
       this.baseCamY = lerp(0.0, -0.20, ease);
       this.baseCamZ = lerp(envCamZ, envCamZ * (7.2 / 7.5), ease);
       this.baseLookY = lerp(0.0, -0.20, ease);
 
-      // Grounding contact shadow intensifies directly under the stationery base
+      // Soft contact shadow gathers under envelope on table runner
       if (this.tableContactShadow) {
-        this.tableContactShadow.material.opacity = ease * 0.72;
+        this.tableContactShadow.material.opacity = Math.pow(ease, 2.0) * 0.72;
       }
 
-      this.envelope.group.visible = true;
-      this.envelope.group.position.set(0, 0, 0);
-      // Smoothly rotate 180° around Y (0 -> Math.PI) as it lands to reveal MẶT SAU (BACK COVER) with wax seal!
-      const flipEase = t > 0.35 ? easeInOutCubic((t - 0.35) / 0.65) : 0;
-      this.envelope.group.rotation.set(0, flipEase * Math.PI, 0);
-      this.envelope.setFlapAngle(0);
-      this.envelope.setSealOpacity(1.0);
-
-      // Strict reverse scroll re-lock: If user returns to p < 0.48, require hold again!
+      // Reverse scroll re-lock: If user returns to p < 0.485, require hold again!
       if (this.envelopeOpened) {
         this.envelopeOpened = false;
         this.openingProgress = 0.0;
