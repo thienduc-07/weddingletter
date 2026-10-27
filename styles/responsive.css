@@ -1,0 +1,185 @@
+/* ============================================================================
+   responsive.css: Tablet, Mobile, and Reduced-Motion Art Direction
+   ========================================================================== */
+
+/* --- TABLET BREAKPOINT (<= 992px) --- */
+@media (max-width: 992px) {
+  :root {
+    --envelope-w: min(400px, 84vw);
+  }
+
+  .story-grid {
+    gap: 3rem;
+  }
+
+  .venue-showcase {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* --- MOBILE BREAKPOINT (<= 768px) --- */
+@media (max-width: 768px) {
+  :root {
+    --envelope-w: min(350px, 88vw);
+    --envelope-h: calc(var(--envelope-w) * 0.7);
+    --card-w: calc(var(--envelope-w) * 0.94);
+    --card-h: calc(var(--card-w) * 1.4);
+    --sc-gutter: 1.25rem;
+    --sc-section: 4.5rem;
+  }
+
+  .site-header {
+    padding: 1rem var(--sc-gutter);
+  }
+
+  .site-mark-date {
+    display: none;
+  }
+
+  /* Envelope Stage Mobile Padding & Perspective */
+  .envelope-stage {
+    perspective: 1200px;
+    perspective-origin: 50% 45%;
+  }
+
+  .envelope-front {
+    padding: 1rem;
+  }
+
+  .envelope-front-border {
+    inset: 10px;
+  }
+
+  .envelope-postage-stamp {
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 44px;
+  }
+
+  .envelope-postage-stamp svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .envelope-postage-stamp span {
+    font-size: 0.42rem;
+  }
+
+  .wax-seal-container {
+    width: 52px;
+    height: 52px;
+    top: calc(59% - 26px);
+    left: calc(50% - 26px);
+  }
+
+  .wax-seal {
+    width: 50px;
+    height: 50px;
+  }
+
+  .wax-seal-inner {
+    width: 36px;
+    height: 36px;
+  }
+
+  .wax-seal-initials {
+    font-size: 1.25rem;
+  }
+
+  /* When Envelope Opens on Mobile */
+  .envelope-wrapper.is-opened .invitation-card {
+    transform: translateY(-210px) translateZ(55px) scale(0.96) rotateX(-1deg);
+  }
+
+  .invitation-card {
+    padding: 1.2rem 1rem;
+  }
+
+  .invitation-card-border {
+    inset: 8px;
+  }
+
+  /* Story Grid Mobile Stacking */
+  .story-grid,
+  .story-grid.reverse {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    direction: ltr;
+    margin-bottom: 3.5rem;
+  }
+
+  .story-grid.reverse > * {
+    direction: ltr;
+  }
+
+  .editorial-photo-frame {
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .timeline-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .attendance-radios {
+    grid-template-columns: 1fr;
+  }
+
+  .rsvp-box {
+    padding: 1.75rem 1.25rem;
+  }
+}
+
+/* --- SMALL MOBILE BREAKPOINT (<= 380px) --- */
+@media (max-width: 380px) {
+  :root {
+    --envelope-w: 295px;
+  }
+
+  .card-names {
+    font-size: 1.5rem;
+  }
+
+  .card-monogram {
+    font-size: 1.6rem;
+  }
+
+  .envelope-wrapper.is-opened .invitation-card {
+    transform: translateY(-185px) translateZ(45px) scale(0.92) rotateX(-1deg);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  #ambientCanvas {
+    display: none !important;
+  }
+
+  .envelope-3d {
+    transition: none !important;
+  }
+
+  .envelope-flap {
+    transition: none !important;
+  }
+
+  .invitation-card {
+    transition: none !important;
+  }
+
+  .wax-seal {
+    transition: none !important;
+  }
+}

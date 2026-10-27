@@ -1,0 +1,215 @@
+/* ============================================================================
+   invitation.css: Exquisite Luxury Wedding Stationery Card
+   ========================================================================== */
+
+/* The Wedding Invitation Card Container */
+.invitation-card {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--paper-white);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 1.4s var(--ease-spring), box-shadow 1s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.2rem, 1rem + 0.6vw, 1.8rem);
+  text-align: center;
+  border: 1px solid rgba(216, 190, 134, 0.4);
+  transform: translateY(0) translateZ(1px);
+}
+
+/* Cotton Paper Subtle Texture & Fibers */
+.invitation-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(rgba(73, 55, 58, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 248, 248, 0.5) 0%, rgba(255, 252, 247, 0.8) 100%);
+  background-size: 6px 6px, 100% 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Delicate Gold Foil Frame Border */
+.invitation-card-border {
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(216, 190, 134, 0.55);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.invitation-card-border::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 0.5px solid rgba(216, 190, 134, 0.28);
+}
+
+/* Four Corner Flourishes */
+.invitation-card-border .corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--gold-mid);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.invitation-card-border .corner-tl { top: -2px; left: -2px; border-width: 1.5px 0 0 1.5px; }
+.invitation-card-border .corner-tr { top: -2px; right: -2px; border-width: 1.5px 1.5px 0 0; }
+.invitation-card-border .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 1.5px 1.5px; }
+.invitation-card-border .corner-br { bottom: -2px; right: -2px; border-width: 0 1.5px 1.5px 0; }
+
+/* Invitation Inner Content Stack */
+.invitation-card-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* Card Header: Monogram & Eyebrow */
+.card-header {
+  margin-top: 0.25rem;
+}
+
+.card-monogram {
+  font-family: var(--font-script);
+  font-size: clamp(1.8rem, 1.5rem + 1vw, 2.5rem);
+  color: var(--gold-mid);
+  margin-bottom: 0.35rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+.card-eyebrow {
+  font-family: var(--sc-font-text);
+  font-size: clamp(0.64rem, 0.6rem + 0.15vw, 0.76rem);
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold-mid);
+  display: block;
+}
+
+/* Card Body: Names & Invitation Message */
+.card-body {
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.card-heading {
+  font-family: var(--sc-font-display);
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.card-names {
+  font-family: var(--sc-font-display);
+  font-size: clamp(1.5rem, 1.3rem + 1vw, 2.2rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0.25rem 0 0.5rem;
+}
+
+.card-names .name-part {
+  display: inline-block;
+  opacity: 1;
+}
+
+.card-names .ampersand {
+  font-family: var(--font-script);
+  font-style: normal;
+  font-size: 0.95em;
+  color: var(--gold-mid);
+  margin: 0 0.25em;
+}
+
+.card-message {
+  font-family: var(--sc-font-text);
+  font-size: clamp(0.68rem, 0.64rem + 0.1vw, 0.78rem);
+  line-height: 1.55;
+  color: var(--muted-ink);
+  max-width: 36ch;
+  margin: 0 auto;
+}
+
+/* Card Footer: Date, Time, Venue */
+.card-footer {
+  margin-bottom: 0.2rem;
+  width: 100%;
+}
+
+.card-datetime {
+  font-family: var(--sc-font-display);
+  font-size: clamp(0.92rem, 0.85rem + 0.3vw, 1.1rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gold-mid);
+  margin-bottom: 0.2rem;
+}
+
+.card-venue-name {
+  font-family: var(--sc-font-text);
+  font-size: clamp(0.70rem, 0.66rem + 0.1vw, 0.78rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.15rem;
+}
+
+.card-venue-address {
+  font-family: var(--sc-font-text);
+  font-size: clamp(0.60rem, 0.56rem + 0.08vw, 0.68rem);
+  color: var(--soft-ink);
+  line-height: 1.35;
+  max-width: 34ch;
+  margin: 0 auto;
+}
+
+/* Botanical Accent SVG */
+.card-botanical {
+  width: 28px;
+  height: 16px;
+  margin: 0.25rem auto;
+  opacity: 0.65;
+  color: var(--gold-mid);
+}
+
+/* ============================================================================
+   EMERGING ANIMATION WHEN WAX SEAL OPENS
+   ========================================================================== */
+.envelope-wrapper.is-opened .invitation-card {
+  transform: translateY(-175px) translateZ(85px) scale(1.08) rotateX(-2deg);
+  box-shadow: 
+    0 35px 70px -15px rgba(73, 55, 58, 0.28),
+    0 15px 30px -8px rgba(73, 55, 58, 0.16);
+  pointer-events: auto;
+}
+
+/* Responsive adjustment for emerging card on smaller viewports */
+@media (max-width: 600px) {
+  .envelope-wrapper.is-opened .invitation-card {
+    transform: translateY(-145px) translateZ(65px) scale(0.98) rotateX(-2deg);
+  }
+}

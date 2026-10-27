@@ -1,0 +1,587 @@
+/* ============================================================================
+   envelope.css: Realistic 3D Baronial Wedding Envelope Architecture
+   ========================================================================== */
+
+/* Pinned 3D Stage Container */
+.envelope-act-container {
+  position: relative;
+  width: 100%;
+}
+
+.sc-stage.envelope-stage,
+.envelope-stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  perspective: 1500px;
+  perspective-origin: 50% 48%;
+  overflow: visible !important;
+  user-select: none;
+  z-index: 10;
+}
+
+/* Atmospheric Soft Shadows & Floor Glow */
+.envelope-floor-shadow {
+  position: absolute;
+  bottom: calc(50% - var(--envelope-h) * 0.72);
+  left: 50%;
+  transform: translateX(-50%) rotateX(85deg);
+  width: calc(var(--envelope-w) * 1.05);
+  height: 90px;
+  background: radial-gradient(ellipse at center, rgba(139, 80, 95, 0.28) 0%, rgba(139, 80, 95, 0.08) 50%, transparent 75%);
+  filter: blur(14px);
+  pointer-events: none;
+  transition: transform 0.8s var(--ease-spring), opacity 0.8s ease;
+  z-index: 1;
+}
+
+/* The 3D Envelope Object Wrapper */
+.envelope-wrapper {
+  position: relative;
+  width: var(--envelope-w);
+  height: var(--envelope-h);
+  transform-style: preserve-3d;
+  will-change: transform;
+  z-index: 2;
+  cursor: grab;
+}
+
+.envelope-wrapper:active {
+  cursor: grabbing;
+}
+
+/* Master 3D Rotator driven by scroll --sc-p and pointer tilt */
+.envelope-3d {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* ============================================================================
+   LAYER 1: FRONT FACE OF ENVELOPE (Address / Monogram Side)
+   ========================================================================== */
+.envelope-front {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: translateZ(2px);
+  background: linear-gradient(135deg, var(--rose-100) 0%, var(--rose-200) 45%, var(--rose-300) 100%);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.85),
+    inset 0 -1px 2px rgba(189, 126, 144, 0.3),
+    0 15px 35px -5px rgba(115, 60, 75, 0.16);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+/* Delicate Paper Texture Grain Overlay */
+.envelope-front::before,
+.envelope-base::before,
+.envelope-flap-front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(73, 55, 58, 0.04) 1px, transparent 1px);
+  background-size: 8px 8px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Embossed Gold Framing on Front */
+.envelope-front-border {
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(216, 190, 134, 0.45);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.envelope-front-border::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 0.5px solid rgba(216, 190, 134, 0.25);
+  border-radius: 2px;
+}
+
+/* Front Monogram Stamping */
+.envelope-front-monogram {
+  position: relative;
+  text-align: center;
+  z-index: 2;
+}
+
+.envelope-front-monogram .mono-seal {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 0.65rem;
+  border-radius: 50%;
+  border: 1px solid var(--champagne-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 252, 247, 0.9), rgba(245, 218, 221, 0.65));
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(189, 126, 144, 0.2);
+}
+
+.envelope-front-monogram .mono-seal span {
+  font-family: var(--font-script);
+  font-size: 1.4rem;
+  color: var(--gold-mid);
+}
+
+.envelope-front-monogram .front-title {
+  font-family: var(--sc-font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
+}
+
+.envelope-front-monogram .front-names {
+  font-family: var(--sc-font-display);
+  font-size: 1.45rem;
+  font-style: italic;
+  color: var(--gold-mid);
+}
+
+.envelope-front-monogram .front-date {
+  font-family: var(--sc-font-text);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--muted-ink);
+  margin-top: 0.4rem;
+}
+
+/* Postage Stamp Accent in Upper Right */
+.envelope-postage-stamp {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  width: 44px;
+  height: 52px;
+  background: var(--ivory);
+  border: 1px dashed rgba(216, 190, 134, 0.6);
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(115, 60, 75, 0.1);
+}
+
+.envelope-postage-stamp svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--gold-mid);
+  opacity: 0.85;
+}
+
+.envelope-postage-stamp span {
+  font-family: var(--sc-font-text);
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gold-mid);
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   LAYER 2: BACK FACE OF ENVELOPE (Folds, Flap, Wax Seal, Pocket)
+   ========================================================================== */
+.envelope-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotateY(180deg) translateZ(2px);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 6px;
+  box-shadow: 0 15px 40px -5px rgba(115, 60, 75, 0.18);
+}
+
+/* Back Base Foundation (inside the pocket) */
+.envelope-base {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(0px);
+  background: linear-gradient(135deg, var(--rose-100) 0%, var(--rose-200) 50%, var(--rose-300) 100%);
+  border-radius: 6px;
+  z-index: 1;
+}
+
+/* Inner Lining (Exquisite Gold Floral/Ivory Pattern inside pocket) */
+.envelope-lining {
+  position: absolute;
+  inset: 6px;
+  transform: translateZ(1px);
+  border-radius: 4px;
+  background-color: var(--ivory);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(216, 190, 134, 0.12) 2px, transparent 2px),
+    radial-gradient(circle at 0 0, rgba(216, 190, 134, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px, 10px 10px;
+  border: 1px solid rgba(216, 190, 134, 0.25);
+  box-shadow: inset 0 0 15px rgba(189, 126, 144, 0.15);
+  z-index: 2;
+}
+
+/* Invitation Card nested INSIDE the pocket (Z-layer between lining & front folds) */
+.envelope-card-slot {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(2px);
+  width: var(--card-w);
+  height: calc(var(--envelope-h) * 0.92);
+  z-index: 3;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  transition: transform 1.2s var(--ease-spring);
+}
+
+.envelope-wrapper.is-opened .envelope-card-slot {
+  z-index: 12;
+  transform: translateX(-50%) translateZ(12px);
+}
+
+/* Left Triangular Fold */
+.envelope-fold-left {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(0 0, 0 100%, 53% 50%);
+  transform: translateZ(3px);
+  background: linear-gradient(115deg, #F8DFE3 0%, #F2CFD4 70%, #E8B9C2 100%);
+  filter: drop-shadow(2px 0 3px rgba(115, 60, 75, 0.08));
+  z-index: 4;
+}
+
+/* Right Triangular Fold */
+.envelope-fold-right {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(100% 0, 100% 100%, 47% 50%);
+  transform: translateZ(3px);
+  background: linear-gradient(245deg, #F8DFE3 0%, #F2CFD4 70%, #E8B9C2 100%);
+  filter: drop-shadow(-2px 0 3px rgba(115, 60, 75, 0.08));
+  z-index: 4;
+}
+
+/* Bottom Triangular Fold (Overlapping left & right to seal pocket) */
+.envelope-fold-bottom {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(0 100%, 100% 100%, 50% 39%);
+  transform: translateZ(4px);
+  background: linear-gradient(180deg, #FCECEE 0%, #F4D3D8 60%, #EABFC7 100%);
+  filter: drop-shadow(0 -3px 5px rgba(115, 60, 75, 0.12));
+  z-index: 5;
+}
+
+/* Bottom Fold Paper Edge Highlight */
+.envelope-fold-bottom::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 100%, 100% 100%, 50% 39%);
+  background: linear-gradient(to top, transparent 96%, rgba(255, 255, 255, 0.6) 100%);
+  pointer-events: none;
+}
+
+/* Top Triangular Opening Flap (Hinged at top: 0 0) */
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  transform: translateZ(5px) rotateX(0deg);
+  transition: transform 1.25s var(--ease-spring);
+  z-index: 6;
+  will-change: transform;
+}
+
+/* Top Flap Outer Face (blush paper, pointing down when closed) */
+.envelope-flap-front {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background: linear-gradient(180deg, #FDEFF1 0%, #F5DADD 50%, #E8BDC5 100%);
+  filter: drop-shadow(0 4px 6px rgba(115, 60, 75, 0.14));
+  backface-visibility: hidden;
+  z-index: 2;
+}
+
+/* Top Flap Inner Face (luxury lining revealed when opened) */
+.envelope-flap-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background-color: var(--ivory);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(216, 190, 134, 0.15) 2px, transparent 2px);
+  background-size: 18px 18px;
+  transform: rotateY(180deg) rotateZ(180deg);
+  backface-visibility: hidden;
+  border-bottom: 1px solid rgba(216, 190, 134, 0.3);
+  z-index: 1;
+}
+
+/* Flap Opened State */
+.envelope-wrapper.is-opened .envelope-flap {
+  transform: translateZ(5px) rotateX(176deg);
+  z-index: 2;
+}
+
+/* ============================================================================
+   LAYER 3: THE GOLDEN WAX SEAL (Sculpted, Dimensional, Hold-to-Open)
+   ========================================================================== */
+.wax-seal-container {
+  position: absolute;
+  top: calc(59% - 30px);
+  left: calc(50% - 30px);
+  width: 60px;
+  height: 60px;
+  transform: translateZ(6px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  transition: transform 0.6s var(--ease-spring), opacity 0.6s ease;
+}
+
+.wax-seal {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 48% 52% 49% 51% / 51% 48% 52% 49%;
+  background: 
+    radial-gradient(circle at 35% 30%, #F8E8B0 0%, #E2C58F 22%, #BD7E90 52%, #834759 85%, #5E2F3D 100%);
+  box-shadow:
+    0 8px 18px -2px rgba(80, 25, 40, 0.42),
+    0 3px 6px -1px rgba(80, 25, 40, 0.28),
+    inset 0 2px 3px rgba(255, 248, 220, 0.75),
+    inset 0 -2px 4px rgba(60, 20, 30, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  padding: 0;
+  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wax-seal:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 10px 22px -2px rgba(80, 25, 40, 0.48),
+    0 4px 8px -1px rgba(80, 25, 40, 0.32),
+    inset 0 2px 4px rgba(255, 255, 255, 0.85);
+}
+
+.wax-seal:focus-visible {
+  outline: 2px solid var(--champagne-gold);
+  outline-offset: 6px;
+}
+
+/* Wax Seal Pressed / Active State */
+.wax-seal.is-pressing {
+  transform: scale(0.96);
+  box-shadow:
+    0 4px 10px -2px rgba(80, 25, 40, 0.5),
+    inset 0 3px 5px rgba(50, 15, 25, 0.75);
+}
+
+/* Sculpted Organic Edge Waves */
+.wax-seal::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 51% 49% 52% 48% / 48% 52% 49% 51%;
+  background: radial-gradient(circle at 30% 25%, rgba(248, 232, 176, 0.4) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Inner Embossed Ring & Monogram */
+.wax-seal-inner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(248, 232, 176, 0.55);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.35),
+    0 1px 1px rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.wax-seal-initials {
+  font-family: var(--font-script);
+  font-size: 1.45rem;
+  font-weight: 500;
+  color: var(--gold-highlight);
+  text-shadow: 
+    0 1px 2px rgba(50, 15, 25, 0.8),
+    0 -1px 1px rgba(255, 255, 255, 0.4);
+  letter-spacing: -0.02em;
+  transform: translateY(-1px);
+}
+
+/* Circular Golden Progress Ring */
+.seal-progress-svg {
+  position: absolute;
+  inset: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  transform: rotate(-90deg);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.seal-progress-track {
+  fill: none;
+  stroke: rgba(216, 190, 134, 0.22);
+  stroke-width: 2.5;
+}
+
+.seal-progress-meter {
+  fill: none;
+  stroke: url(#goldProgressGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  transition: stroke-dashoffset 0.05s linear;
+  filter: drop-shadow(0 0 3px rgba(248, 232, 176, 0.85));
+}
+
+/* Gold Sparkle Burst on Hold Complete */
+.seal-sparkles {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.seal-sparkles.is-bursting {
+  opacity: 1;
+}
+
+/* Opened / Broken Seal State */
+.envelope-wrapper.is-opened .wax-seal-container {
+  transform: translateY(-40px) translateZ(8px) scale(0.85);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Helper Instructions & Accessible Button Below Envelope */
+.seal-instruction-wrap {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: auto;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.seal-instruction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(255, 252, 247, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(216, 190, 134, 0.45);
+  box-shadow: 0 4px 15px rgba(115, 60, 75, 0.08);
+  font-family: var(--sc-font-text);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+
+.seal-instruction-badge .pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold-mid);
+  box-shadow: 0 0 6px var(--champagne-gold);
+  animation: pulseGold 2s infinite ease-in-out;
+}
+
+@keyframes pulseGold {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 10px var(--gold-highlight); }
+}
+
+.btn-open-accessible {
+  background: none;
+  border: none;
+  font-family: var(--sc-font-text);
+  font-size: 0.75rem;
+  color: var(--muted-ink);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.btn-open-accessible:hover {
+  opacity: 1;
+  color: var(--ink);
+}
+
+/* Hide instructions once opened */
+.envelope-wrapper.is-opened ~ .seal-instruction-wrap {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 15px);
+}

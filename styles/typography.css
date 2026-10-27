@@ -1,0 +1,134 @@
+/* ============================================================================
+   typography.css: Luxury Wedding Editorial Typography System
+   ========================================================================== */
+
+/* Display Serif Headings */
+.font-display {
+  font-family: var(--sc-font-display);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* Calligraphic Monogram Accent */
+.font-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Modern Supporting Sans */
+.font-sans {
+  font-family: var(--sc-font-text);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+/* Editorial Labels */
+.editorial-eyebrow {
+  font-family: var(--sc-font-text);
+  font-size: clamp(0.68rem, 0.65rem + 0.2vw, 0.82rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--gold-mid);
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+/* Primary Names */
+.couple-names {
+  font-family: var(--sc-font-display);
+  font-size: clamp(2.4rem, 1.8rem + 3.2vw, 4.4rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0.4rem 0;
+}
+
+.couple-names .name-part {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-spring), opacity 0.6s ease;
+}
+
+.couple-names .ampersand {
+  font-family: var(--font-script);
+  font-style: normal;
+  font-size: 0.9em;
+  color: var(--gold-mid);
+  margin: 0 0.35em;
+  display: inline-block;
+}
+
+/* Metallic Gold Typography Accent */
+.gold-text {
+  background: var(--gold-foil);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--gold-mid);
+  display: inline-block;
+}
+
+/* Subheadings */
+.editorial-subheading {
+  font-family: var(--sc-font-display);
+  font-size: clamp(1.2rem, 1.05rem + 0.8vw, 1.75rem);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--muted-ink);
+  line-height: 1.4;
+  margin: 0.5rem 0 1rem;
+}
+
+/* Body Prose */
+.editorial-body {
+  font-family: var(--sc-font-text);
+  font-size: clamp(0.88rem, 0.85rem + 0.15vw, 1rem);
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--muted-ink);
+  max-width: 58ch;
+}
+
+/* Quotes */
+.editorial-quote {
+  font-family: var(--sc-font-display);
+  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--ink);
+  position: relative;
+  padding: 0 1.5rem;
+}
+
+.editorial-quote-author {
+  font-family: var(--sc-font-text);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-mid);
+  margin-top: 0.75rem;
+  display: block;
+}
+
+/* Thin Gold Decorative Dividers */
+.gold-rule {
+  width: 50px;
+  height: 1px;
+  background: var(--gold-gradient);
+  margin: 1.25rem auto;
+  border: none;
+  opacity: 0.75;
+}
+
+.gold-rule-wide {
+  width: 120px;
+  height: 1px;
+  background: var(--gold-gradient);
+  margin: 1.75rem auto;
+  border: none;
+  opacity: 0.75;
+}

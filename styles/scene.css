@@ -1,0 +1,717 @@
+/* ============================================================================
+   THE UNFOLDING LETTER — SCENE, AMBIENT BACKGROUND & EDITORIAL HUD (V2.1)
+   ============================================================================ */
+
+/* Global Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root, html, body {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--background, #FFF8F8);
+  color: var(--ink, #594449);
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  /* Hide scrollbars cleanly while preserving true scrolling */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ----------------------------------------------------------------------------
+   Continuous Scroll Track (Active from the very start for 3D flight & unfolding)
+   ---------------------------------------------------------------------------- */
+.scroll-track {
+  position: relative;
+  width: 100%;
+  height: 500vh; /* Smooth, luxurious scroll distance */
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------------------
+   Layer A & B & C & D: Multi-Layer Ambient Background Canvas
+   ---------------------------------------------------------------------------- */
+.ambient-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------------------
+   Layer E: Fixed Fullscreen WebGL Stage (3D Envelope & Paper)
+   ---------------------------------------------------------------------------- */
+.webgl-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#webgl-stage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* ----------------------------------------------------------------------------
+   Fine Paper Grain Scrim
+   ---------------------------------------------------------------------------- */
+.paper-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* ----------------------------------------------------------------------------
+   CLAUDE CODE MINIMALIST VIEWPORT CROSSHAIRS
+   Subtle engineering crosshairs in the 4 corners of the viewport
+   ---------------------------------------------------------------------------- */
+.tech-crosshair {
+  position: fixed;
+  z-index: 28;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.90rem;
+  font-weight: 500;
+  color: var(--gold-imperial, #E5C158);
+  text-shadow: none;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.75;
+}
+
+.crosshair-tl { top: clamp(0.75rem, 2vw, 1.25rem); left: clamp(0.75rem, 2vw, 1.25rem); }
+.crosshair-tr { top: clamp(0.75rem, 2vw, 1.25rem); right: clamp(0.75rem, 2vw, 1.25rem); }
+.crosshair-bl { bottom: clamp(0.75rem, 2vw, 1.25rem); left: clamp(0.75rem, 2vw, 1.25rem); }
+.crosshair-br { bottom: clamp(0.75rem, 2vw, 1.25rem); right: clamp(0.75rem, 2vw, 1.25rem); }
+
+/* Blinking Terminal Cursor */
+.cursor-blink {
+  display: inline-block;
+  color: var(--gold-imperial-light, #FFF2C2);
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-weight: 600;
+  text-shadow: none;
+  animation: blinkTerminalCursor 0.9s step-start infinite;
+}
+
+@keyframes blinkTerminalCursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ----------------------------------------------------------------------------
+   INTERACTIVE SEAL HOLD TRIGGER OVERLAY (V3.1 MAGNETIC AFFORDANCE)
+   Sits exactly over the 3D wax seal button in the center of the viewport
+   ---------------------------------------------------------------------------- */
+.seal-hold-trigger {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  z-index: 50; /* Top priority above canvas and other layers */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.seal-hold-trigger.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.seal-hold-trigger:hover {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.seal-hold-trigger.holding {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+.seal-hold-trigger.completed {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.35);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Radiant pulsating golden aura around seal button */
+.seal-pulse-glow {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  border-radius: 50%;
+  border: 1px dashed rgba(215, 188, 131, 0.55);
+  animation: spinSealAura 18s linear infinite, pulseSealAura 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes spinSealAura {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseSealAura {
+  0%, 100% { opacity: 0.45; transform: scale(0.97); }
+  50% { opacity: 0.90; transform: scale(1.04); }
+}
+
+.hold-progress-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hold-circle-bg {
+  fill: none;
+  stroke: rgba(184, 29, 48, 0.28);
+  stroke-width: 2.8;
+}
+
+.hold-circle-meter {
+  fill: none;
+  stroke: #B81D30;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-dasharray: 264;
+  stroke-dashoffset: 264;
+  transition: stroke-dashoffset 0.04s linear;
+  filter: drop-shadow(0 0 10px rgba(184, 29, 48, 0.90)) drop-shadow(0 0 4px rgba(229, 193, 88, 0.85));
+}
+
+.hold-prompt-text {
+  position: absolute;
+  bottom: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-imperial-light, #FFF2C2);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  pointer-events: none;
+  animation: pulsePrompt 2.2s infinite ease-in-out;
+}
+
+@keyframes pulsePrompt {
+  0%, 100% { opacity: 0.85; transform: translate(-50%, 0); }
+  50% { opacity: 1; transform: translate(-50%, -2px); }
+}
+
+/* ----------------------------------------------------------------------------
+   EDITORIAL TYPOGRAPHY HUD SYSTEM (V3.3 IGLOO.INC & AWWWARDS LUXURY AESTHETIC)
+   CRITICAL: STRICTLY NO BOXES / NO CARDS / NO PILLS / NO TEXT-SHADOW!
+   Crisp, razor-sharp vector typography in radiant imperial gold
+   ---------------------------------------------------------------------------- */
+.corner-hud {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
+  color: var(--gold-imperial, #E5C158);
+  user-select: none;
+  will-change: opacity, transform;
+  transition: opacity 0.4s ease;
+}
+
+/* TOP LEFT — Group A Editorial */
+.corner-tl {
+  top: clamp(1.25rem, 3.5vw, 2.75rem);
+  left: clamp(1.25rem, 3.5vw, 3rem);
+  max-width: 380px;
+}
+
+.editorial-id {
+  display: inline-block;
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
+  font-size: clamp(0.72rem, 0.68rem + 0.22vw, 0.86rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--gold-imperial, #E5C158);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* TOP CENTER — Atmospheric Inscription */
+.corner-tc {
+  top: clamp(1.25rem, 3.5vw, 2.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: 440px;
+}
+
+.editorial-center {
+  display: inline-block;
+  font-family: var(--font-serif, 'Playfair Display', 'Cormorant Garamond', Georgia, serif);
+  font-size: clamp(0.88rem, 0.82rem + 0.30vw, 1.10rem);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-imperial-light, #FFF2C2);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* TOP RIGHT — Group B Chapter Markers (Claude Code Monospace) */
+.corner-tr {
+  top: clamp(1.25rem, 3.5vw, 2.75rem);
+  right: clamp(1.25rem, 3.5vw, 3rem);
+  text-align: right;
+  max-width: 340px;
+}
+
+.scroll-chapter {
+  display: inline-block;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: clamp(0.70rem, 0.66rem + 0.2vw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-imperial, #E5C158);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* SIDE MARGINS — Vertical Inscriptions */
+.corner-ml {
+  top: 50%;
+  left: clamp(1rem, 2.5vw, 2rem);
+  transform: translateY(-50%) rotate(-90deg);
+  transform-origin: center center;
+}
+
+.corner-mr {
+  top: 50%;
+  right: clamp(1rem, 2.5vw, 2rem);
+  transform: translateY(-50%) rotate(90deg);
+  transform-origin: center center;
+}
+
+.vertical-editorial {
+  display: inline-block;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold-imperial-rich, #D4AF37);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* BOTTOM LEFT — THIÊN ĐỨC × PHƯƠNG ANH */
+.corner-bl {
+  bottom: clamp(1.25rem, 3.5vw, 2.75rem);
+  left: clamp(1.25rem, 3.5vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.names-text {
+  display: inline-block;
+  font-family: var(--font-serif, 'Playfair Display', 'Cormorant Garamond', Georgia, serif);
+  font-size: clamp(1.06rem, 1.00rem + 0.36vw, 1.40rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-imperial-light, #FFF2C2);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.telemetry-sub {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.60rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--gold-imperial, #E5C158);
+  text-shadow: none;
+  margin-top: -0.1rem;
+}
+
+.progress-track-line {
+  position: relative;
+  width: clamp(90px, 12vw, 150px);
+  height: 2px;
+  background-color: rgba(229, 193, 88, 0.35);
+  overflow: hidden;
+  border-radius: 2px;
+  margin-top: 0.2rem;
+}
+
+.progress-fill-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background-color: var(--gold-imperial-rich, #D4AF37);
+  box-shadow: none;
+  transition: width 0.05s linear, opacity 0.3s ease;
+}
+
+/* BOTTOM RIGHT — Group C Micro Typography */
+.corner-br {
+  bottom: clamp(1.25rem, 3.5vw, 2.75rem);
+  right: clamp(1.25rem, 3.5vw, 3rem);
+  text-align: right;
+  max-width: 320px;
+}
+
+.microcopy-text {
+  display: inline-block;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: clamp(0.66rem, 0.62rem + 0.18vw, 0.78rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-imperial, #E5C158);
+  text-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   Contextual Interaction Invitation Pill (Frameless Claude Code Tech Aesthetic)
+   ---------------------------------------------------------------------------- */
+.scroll-hint {
+  position: fixed;
+  bottom: 2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.scroll-hint.hidden {
+  opacity: 0;
+  transform: translate(-50%, 12px);
+}
+
+.scroll-hint-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--gold-imperial, #E5C158);
+  box-shadow: none;
+  animation: pulseGold 2s infinite ease-in-out;
+}
+
+@keyframes pulseGold {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.6); opacity: 1; }
+}
+
+.scroll-hint-label {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--gold-imperial-light, #FFF2C2);
+  text-shadow: none;
+}
+
+/* ----------------------------------------------------------------------------
+   ACCESSIBLE STATIC FALLBACK
+   ---------------------------------------------------------------------------- */
+.accessible-letter {
+  display: none;
+  position: relative;
+  max-width: 620px;
+  margin: 4rem auto;
+  padding: clamp(2rem, 5vw, 4rem);
+  background: var(--paper, #FFFDF9);
+  border: 1px solid rgba(215, 188, 131, 0.45);
+  box-shadow: 0 16px 40px var(--shadow-warm, rgba(89, 68, 73, 0.12));
+  text-align: center;
+  z-index: 50;
+}
+
+body.no-webgl .accessible-letter,
+body.show-accessible .accessible-letter {
+  display: block;
+}
+
+body.no-webgl .webgl-container,
+body.no-webgl .corner-hud,
+body.no-webgl .seal-hold-trigger,
+body.show-accessible .webgl-container {
+  display: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   RESPONSIVE DESIGN (320px, 375px, 390px, 430px, 768px, 1024px, 1440px)
+   ---------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .corner-ml, .corner-mr {
+    display: none; /* Hide vertical side margins on narrow viewports */
+  }
+}
+
+@media (max-width: 768px) {
+  .corner-tl {
+    max-width: 160px;
+  }
+  .corner-tc {
+    display: none;
+  }
+  .corner-tr {
+    max-width: 180px;
+  }
+  .progress-track-line {
+    width: 65px;
+  }
+}
+
+@media (max-width: 480px) {
+  .corner-tl {
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: 0.75rem;
+    max-width: 160px;
+  }
+  .corner-tr {
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: 0.75rem;
+    max-width: 190px;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .editorial-id, .scroll-chapter {
+    font-size: 0.56rem;
+    letter-spacing: 0.10em;
+  }
+  .corner-bl {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    left: 0.75rem;
+    max-width: 135px;
+    gap: 0.25rem;
+  }
+  .names-text {
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+  }
+  .progress-track-line {
+    width: 48px;
+  }
+  .corner-br {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    right: 0.75rem;
+    max-width: 130px;
+    text-align: right;
+  }
+  .microcopy-text {
+    font-size: 0.54rem;
+    letter-spacing: 0.08em;
+  }
+  .seal-hold-trigger {
+    width: 96px;
+    height: 96px;
+  }
+  .hold-prompt-text {
+    font-size: 0.56rem;
+    bottom: -24px;
+    white-space: nowrap;
+  }
+  .scroll-hint {
+    bottom: max(3.4rem, calc(2.4rem + env(safe-area-inset-bottom)));
+    padding: 0.32rem 0.75rem;
+    max-width: 85vw;
+  }
+  .scroll-hint-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.10em;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   PHẦN VII — CINEMATIC ROMANTIC PAGE REVEAL (QUIET LUXURY WEDDING EDITORIAL)
+   Silky, non-glare atmospheric reveal when page is loaded or reloaded.
+   Zero harsh white flashes, micro-blur lift, elegant typography dissipation.
+   ---------------------------------------------------------------------------- */
+.romantic-page-veil {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 1;
+  background: radial-gradient(circle at 50% 48%, rgba(254, 250, 246, 0.98) 0%, rgba(248, 238, 235, 0.96) 65%, rgba(242, 226, 228, 0.98) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: blur(0px);
+}
+
+.romantic-page-veil.revealed {
+  opacity: 0;
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.romantic-veil-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 3rem;
+  max-width: 90vw;
+  transform: translateY(0);
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.70s ease;
+}
+
+.romantic-page-veil.revealed .romantic-veil-card {
+  transform: translateY(-12px) scale(0.98);
+  opacity: 0;
+}
+
+.romantic-veil-monogram {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2rem, 1.8rem + 1vw, 2.8rem);
+  font-style: italic;
+  font-weight: 500;
+  color: #8F6B28;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.4rem;
+}
+
+.romantic-veil-eyebrow {
+  font-family: var(--font-sans, 'Montserrat', sans-serif);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #8A6235;
+  margin-bottom: 0.75rem;
+}
+
+.romantic-veil-names {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: clamp(1.4rem, 1.2rem + 1.2vw, 2.4rem);
+  font-style: italic;
+  font-weight: 600;
+  color: #4A2B33;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+}
+
+.romantic-veil-sub {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 0.75rem;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: #8A6235;
+  margin-bottom: 1.2rem;
+}
+
+.romantic-veil-line {
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #D7BC83, transparent);
+}
+
+/* Reduced Motion Mode */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-track {
+    height: auto;
+  }
+  .webgl-container,
+  .corner-hud,
+  .scroll-hint,
+  .seal-hold-trigger {
+    display: none !important;
+  }
+  .accessible-letter {
+    display: block !important;
+    margin: 2rem auto;
+  }
+}

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>THE UNFOLDING LETTER · Thiên Đức &amp; Phương Anh · Cinematic 3D Wedding Experience</title>
+  <meta name="description" content="Với niềm hạnh phúc và tình yêu thương, Thiên Đức &amp; Phương Anh trân trọng kính mời bạn đến chung vui trong ngày đặc biệt của chúng tôi tại The Garden Wedding, ngày 20.12.2026.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='16' fill='%23F4D9DE'/><circle cx='16' cy='16' r='10' fill='%23D7BC83'/><text x='16' y='21' font-family='serif' font-size='14' text-anchor='middle' fill='%23594449'>Đ</text></svg>">
+
+  <!-- Google Fonts: Playfair Display, Cormorant Garamond, Montserrat, Space Mono, Great Vibes (complete Vietnamese coverage) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Great+Vibes&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet Hierarchy -->
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/scene.css">
+</head>
+<body>
+
+  <!-- Layer A, B, C, D: Multi-Layer Ambient Atmosphere & Parallax Canvas -->
+  <canvas id="ambient-canvas" class="ambient-canvas" aria-hidden="true"></canvas>
+
+  <!-- Fine Paper Texture Grain Overlay -->
+  <div class="paper-grain" aria-hidden="true"></div>
+
+  <!-- Continuous Scroll Track (Unlocked after envelope is opened) -->
+  <div class="scroll-track" aria-hidden="true"></div>
+
+  <!-- Layer E: Real 3D Physical Scene Stage (Three.js Envelope & Paper) -->
+  <div class="webgl-container" id="webgl-container"></div>
+
+  <!-- Minimalist Luxury Viewport Corner Accents -->
+  <div class="tech-crosshair crosshair-tl" aria-hidden="true">✧</div>
+  <div class="tech-crosshair crosshair-tr" aria-hidden="true">✧</div>
+  <div class="tech-crosshair crosshair-bl" aria-hidden="true">✧</div>
+  <div class="tech-crosshair crosshair-br" aria-hidden="true">✧</div>
+
+  <!-- ======================================================================
+       INTERACTIVE SEAL PRESS-AND-HOLD OVERLAY
+       Positioned directly over the wax seal at center of viewport
+       ====================================================================== -->
+  <div id="seal-hold-trigger" class="seal-hold-trigger" role="button" tabindex="0" aria-label="Ấn và giữ con dấu sáp để mở phong bì">
+    <div class="seal-pulse-glow" aria-hidden="true"></div>
+    <svg class="hold-progress-svg" viewBox="0 0 100 100">
+      <circle class="hold-circle-bg" cx="50" cy="50" r="42" />
+      <circle class="hold-circle-meter" id="hold-circle-meter" cx="50" cy="50" r="42" />
+    </svg>
+    <div class="hold-prompt-text" id="hold-prompt-text">ẤN VÀ GIỮ CON DẤU SÁP ĐỂ MỞ <span class="cursor-blink">_</span></div>
+  </div>
+
+  <!-- ======================================================================
+       EDITORIAL TYPOGRAPHY HUD SYSTEM (V3.2 LUXURY AESTHETIC — NO SHADOWS)
+       Distributed around viewport: top, center, sides, bottom
+       ====================================================================== -->
+  <!-- Top Left: Group A Wedding Editorial -->
+  <aside class="corner-hud corner-tl" aria-label="Editorial Header">
+    <div id="hud-top-left" class="editorial-id">LỄ THÀNH HÔN · THIÊN ĐỨC &amp; PHƯƠNG ANH</div>
+  </aside>
+
+  <!-- Top Center: Subtitle / Watermark -->
+  <aside class="corner-hud corner-tc" aria-label="Atmospheric Watermark">
+    <div id="hud-top-center" class="editorial-center">A MOMENT SEALED IN TIME</div>
+  </aside>
+
+  <!-- Top Right: Group B Chapter Markers -->
+  <aside class="corner-hud corner-tr" aria-label="Chapter Marker">
+    <div id="hud-top-right" class="scroll-chapter">ACT I · LỜI MỞ ĐẦU</div>
+  </aside>
+
+  <!-- Left Margin: Subtle Vertical Inscription -->
+  <aside class="corner-hud corner-ml" aria-label="Left Margin Inscription">
+    <div id="hud-mid-left" class="vertical-editorial">✧ AN INVITATION TO FOREVER ✧</div>
+  </aside>
+
+  <!-- Right Margin: Subtle Vertical Inscription -->
+  <aside class="corner-hud corner-mr" aria-label="Right Margin Inscription">
+    <div id="hud-mid-right" class="vertical-editorial">✧ A PROMISE WRITTEN WITH LOVE ✧</div>
+  </aside>
+
+  <!-- Bottom Left: Couple Names & Continuous Progress Track -->
+  <aside class="corner-hud corner-bl" aria-label="Couple Names & Progress">
+    <div id="hud-bot-left-names" class="names-text">THIÊN ĐỨC × PHƯƠNG ANH</div>
+    <div class="telemetry-sub" id="hud-telemetry-sub">THE GARDEN WEDDING · 20.12.2026</div>
+    <div class="progress-track-line" id="hud-progress-line">
+      <div id="hud-progress-fill" class="progress-fill-line"></div>
+    </div>
+  </aside>
+
+  <!-- Bottom Center: Contextual Interaction Invitation Pill -->
+  <div id="scrollHint" class="scroll-hint">
+    <span class="scroll-hint-dot"></span>
+    <span class="scroll-hint-label" id="scroll-hint-text">Cuộn trang để mở thư</span>
+    <span class="cursor-blink">_</span>
+  </div>
+
+  <!-- Bottom Right: Group C Micro Typography -->
+  <aside class="corner-hud corner-br" aria-label="Stage Status">
+    <div id="hud-bot-right" class="microcopy-text">THE GARDEN WEDDING · VOWS AT SUNSET</div>
+  </aside>
+
+  <!-- Romantic Page Reveal Intro (Phần VII: Cinematic Romantic Reveal — Quiet Luxury) -->
+  <div id="romantic-page-veil" class="romantic-page-veil" aria-hidden="true">
+    <div class="romantic-veil-card">
+      <div class="romantic-veil-monogram">Đ · A</div>
+      <div class="romantic-veil-eyebrow">LỄ THÀNH HÔN</div>
+      <div class="romantic-veil-names">Thiên Đức &amp; Phương Anh</div>
+      <div class="romantic-veil-sub">THE GARDEN WEDDING · 20.12.2026</div>
+      <div class="romantic-veil-line"></div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       ACCESSIBLE STATIC FALLBACK (For non-WebGL or reduced motion readers)
+       ====================================================================== -->
+  <main>
+    <article id="accessible-letter" class="accessible-letter" aria-label="Thiệp cưới Thiên Đức &amp; Phương Anh">
+      <header>
+        <div style="font-family: var(--font-serif); font-size: 3rem; font-style: italic; color: var(--gold);" id="fallback-monogram">Đ · A</div>
+        <p style="font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold-shadow); margin-top: 1rem;" id="fallback-eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
+        <h1 style="font-family: var(--font-serif); font-size: 2.2rem; font-style: italic; margin-top: 0.5rem; color: var(--ink);" id="fallback-heading">Lễ Thành Hôn</h1>
+      </header>
+
+      <section style="margin: 2rem 0;">
+        <h2 style="font-family: var(--font-serif); font-size: 3rem; font-style: italic; color: var(--ink); line-height: 1.2;" id="fallback-names">
+          Thiên Đức &amp; Phương Anh
+        </h2>
+        <p style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.35em; color: var(--gold-shadow); margin-top: 0.75rem;">
+          WEDDING INVITATION
+        </p>
+        <p style="font-size: 1rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.7;" id="fallback-message">
+          Với niềm hạnh phúc và tình yêu thương, chúng tôi trân trọng kính mời bạn đến chung vui trong ngày đặc biệt của chúng tôi.
+        </p>
+      </section>
+
+      <footer style="margin-top: 2rem; border-top: 1px solid rgba(215, 188, 131, 0.35); padding-top: 1.5rem;">
+        <p style="font-family: var(--font-serif); font-size: 1.4rem; color: var(--gold-shadow);" id="fallback-datetime">
+          15:30 · Chủ Nhật, 20 Tháng 12, 2026
+        </p>
+        <p style="font-size: 1.1rem; font-weight: 600; letter-spacing: 0.15em; margin-top: 0.5rem; color: var(--ink);" id="fallback-venue-name">
+          THE GARDEN WEDDING
+        </p>
+        <p style="font-size: 0.9rem; color: var(--muted); margin-top: 0.25rem;" id="fallback-venue-address">
+          123 Đường Hoa Hồng, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh
+        </p>
+        <p style="font-family: var(--font-serif); font-style: italic; font-size: 1.1rem; color: var(--muted); margin-top: 1.5rem;" id="fallback-closing">
+          Chúng tôi rất mong được cùng bạn lưu giữ khoảnh khắc đặc biệt này.
+        </p>
+      </footer>
+    </article>
+  </main>
+
+  <!-- Main Controller Initialization -->
+  <script type="module">
+    import { weddingContent } from './src/data/wedding-content.js';
+    import { AmbientBackground } from './scripts/ambient-background.js';
+    import { SceneController } from './scripts/scene-controller.js';
+
+    // 1. Initialize Multi-Layer Atmosphere Canvas
+    try {
+      window.ambientBackground = new AmbientBackground('#ambient-canvas');
+    } catch (err) {
+      console.warn('Ambient background warning:', err);
+    }
+
+    // 2. Populate Accessible Fallback Data
+    function populateFallback() {
+      const elMono = document.getElementById('fallback-monogram');
+      const elEyebrow = document.getElementById('fallback-eyebrow');
+      const elHeading = document.getElementById('fallback-heading');
+      const elNames = document.getElementById('fallback-names');
+      const elMsg = document.getElementById('fallback-message');
+      const elDateTime = document.getElementById('fallback-datetime');
+      const elVenueName = document.getElementById('fallback-venue-name');
+      const elVenueAddress = document.getElementById('fallback-venue-address');
+      const elClosing = document.getElementById('fallback-closing');
+
+      if (elMono) elMono.textContent = weddingContent.couple?.monogram || 'Đ · A';
+      if (elEyebrow) elEyebrow.textContent = weddingContent.invitation?.eyebrow || 'TRÂN TRỌNG KÍNH MỜI';
+      if (elHeading) elHeading.textContent = weddingContent.invitation?.heading || 'Lễ Thành Hôn';
+      if (elNames) elNames.textContent = `${weddingContent.couple?.partnerOne || 'Thiên Đức'} & ${weddingContent.couple?.partnerTwo || 'Phương Anh'}`;
+      if (elMsg) elMsg.textContent = weddingContent.invitation?.message || '';
+      if (elDateTime) elDateTime.textContent = `${weddingContent.wedding?.ceremonyTime || '15:30'} · ${weddingContent.wedding?.dateDisplay || '20.12.2026'}`;
+      if (elVenueName) elVenueName.textContent = weddingContent.venue?.name || '';
+      if (elVenueAddress) elVenueAddress.textContent = weddingContent.venue?.address || '';
+      if (elClosing) elClosing.textContent = weddingContent.invitation?.closing || '';
+    }
+
+    populateFallback();
+
+    // 3. Check WebGL support & Initialize SceneController
+    function hasWebGL() {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      } catch (e) {
+        return false;
+      }
+    }
+
+    if (hasWebGL()) {
+      try {
+        window.sceneController = new SceneController('#webgl-container');
+      } catch (err) {
+        console.error('Failed to initialize 3D scene:', err);
+        document.body.classList.add('no-webgl');
+      }
+    } else {
+      document.body.classList.add('no-webgl');
+    }
+  </script>
+</body>
+</html>

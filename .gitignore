@@ -17,6 +17,11 @@ dist/
 # only committed media, and they are deliberately not video files.
 !media/*.webp
 
+# Test Screenshots & Artifacts
+*.png
+v3_*.png
+v4_*.png
+
 # Node
 node_modules/
 package-lock.json
