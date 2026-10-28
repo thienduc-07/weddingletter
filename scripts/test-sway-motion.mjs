@@ -138,30 +138,32 @@ async function main() {
   console.log('\n[TEST 2] Evaluating 4-Stage Sway Trajectory...');
   const trajectoryCheck = await evaluate(`(() => {
     const sc = window.sceneController;
-    const stageA = sc.getSwayTransform(0.15); // Peak A (left tilt)
-    const stageB = sc.getSwayTransform(0.40); // Peak B (right tilt)
-    const stageC = sc.getSwayTransform(0.63); // Oscillation C
-    const stageD_mid = sc.getSwayTransform(0.85); // Slide left D
-    const stageD_end = sc.getSwayTransform(1.0);  // Rest position
+    const apex0 = sc.getSwayTransform(0.12); // Apex 0 (top-left)
+    const sweep1 = sc.getSwayTransform(0.38); // Sweep 1 (far right)
+    const sweep2 = sc.getSwayTransform(0.62); // Sweep 2 (left under seal)
+    const sweep3 = sc.getSwayTransform(0.82); // Sweep 3 (right across flowers)
+    const sweep4 = sc.getSwayTransform(1.00); // Sweep 4 (land at rest)
 
     return {
-      stageA_peakLeft: stageA,
-      stageB_peakRight: stageB,
-      stageC_decay: stageC,
-      stageD_slide: stageD_mid,
-      stageD_finalRest: stageD_end,
-      // In Three.js: positive rotZ tilts top to left, negative rotZ tilts top to right
-      leftIsStrongest: stageA.rotZ > Math.abs(stageB.rotZ) && stageA.x < 0,
-      rightIsSubtler: Math.abs(stageB.rotZ) < stageA.rotZ && stageB.x > 0,
-      stopsCleanlyAtZero: stageD_end.x === 0 && stageD_end.y === 0 && stageD_end.rotZ === 0 && stageD_end.rotX === 0
+      apex0_topLeft: apex0,
+      sweep1_farRight: sweep1,
+      sweep2_leftUnderSeal: sweep2,
+      sweep3_rightFlowers: sweep3,
+      sweep4_restPosition: sweep4,
+      wideAmplitude: apex0.x < -2.0 && sweep1.x > 2.0 && sweep2.x < -1.5 && sweep3.x > 1.5,
+      backgroundDescendsMonotonically:
+        sweep1.bgDescent > apex0.bgDescent &&
+        sweep2.bgDescent > sweep1.bgDescent &&
+        sweep3.bgDescent > sweep2.bgDescent &&
+        sweep4.bgDescent >= sweep3.bgDescent,
+      stopsCleanlyAtZero: sweep4.x === 0 && sweep4.y === 0 && sweep4.rotZ === 0 && sweep4.rotX === 0
     };
   })()`);
-  console.log('Sway Trajectory Check:', trajectoryCheck.result?.value);
+  console.log('Serpentine Sway Trajectory Check:', JSON.stringify(trajectoryCheck.result?.value, null, 2));
 
   // Test 3: Visual inspection and screenshot of each sway phase
-  console.log('\n[TEST 3] Capturing 4 Sway Stages visual frames...');
+  console.log('\n[TEST 3] Capturing 4 Serpentine Sweeps with Background Step Descent...');
 
-  // Set p = 0.50 and manually drive sway u parameter for screenshot verification
   await evaluate(`(() => {
     const sc = window.sceneController;
     sc.envelopeOpened = false;
@@ -170,47 +172,52 @@ async function main() {
     sc.applyChoreography(0.50);
   })()`);
 
-  // Stage A: Peak tilt left
+  // Sweep 1: Far left to far right across the screen
   await evaluate(`(() => {
     const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.15);
-    sc.swayGroup.position.set(sway.x, sway.y, 0);
-    sc.swayGroup.rotation.set(sway.rotX, 0, sway.rotZ);
+    const sway = sc.getSwayTransform(0.26); // Mid Sweep 1 crossing screen
+    sc.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
+    sc.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
     sc.tableContactShadow.position.x = sway.x;
+    if (window.ambientBackground) {
+      window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
+      window.ambientBackground.swayDescent = sway.bgDescent;
+      window.ambientBackground.render();
+    }
   })()`);
-  await captureState('sway_01_stageA_tilt_left.png', 'Giai đoạn A: Nghiêng mạnh sang trái với biên độ lớn nhất');
+  await captureState('sway_01_sweep1_left_to_right.png', 'Đường vẽ 1: Quét từ mép trái sang mép phải, background hạ nấc 1');
 
-  // Stage B: Tilt right with smaller amplitude
+  // Sweep 2: Far right to left under wax seal
   await evaluate(`(() => {
     const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.40);
-    sc.swayGroup.position.set(sway.x, sway.y, 0);
-    sc.swayGroup.rotation.set(sway.rotX, 0, sway.rotZ);
+    const sway = sc.getSwayTransform(0.50); // Mid Sweep 2 passing under wax seal
+    sc.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
+    sc.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
     sc.tableContactShadow.position.x = sway.x;
+    if (window.ambientBackground) {
+      window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
+      window.ambientBackground.swayDescent = sway.bgDescent;
+      window.ambientBackground.render();
+    }
   })()`);
-  await captureState('sway_02_stageB_tilt_right.png', 'Giai đoạn B: Nghiêng sang phải với biên độ nhỏ hơn');
+  await captureState('sway_02_sweep2_right_to_left.png', 'Đường vẽ 2: Vòng từ mép phải quét chéo xuống mép trái dưới sáp nến, background hạ nấc 2');
 
-  // Stage C: Decaying oscillation
+  // Sweep 3: Left to right across flower line
   await evaluate(`(() => {
     const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.63);
-    sc.swayGroup.position.set(sway.x, sway.y, 0);
-    sc.swayGroup.rotation.set(sway.rotX, 0, sway.rotZ);
+    const sway = sc.getSwayTransform(0.72); // Mid Sweep 3 crossing table flowers
+    sc.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
+    sc.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
     sc.tableContactShadow.position.x = sway.x;
+    if (window.ambientBackground) {
+      window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
+      window.ambientBackground.swayDescent = sway.bgDescent;
+      window.ambientBackground.render();
+    }
   })()`);
-  await captureState('sway_03_stageC_decay_oscillation.png', 'Giai đoạn C: Đung đưa giảm dần biên độ');
+  await captureState('sway_03_sweep3_across_flowers.png', 'Đường vẽ 3: Vòng từ mép trái quét chéo sang dải hoa bàn tiệc, background hạ nấc 3');
 
-  // Stage D: Sliding left and landing
-  await evaluate(`(() => {
-    const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.85);
-    sc.swayGroup.position.set(sway.x, sway.y, 0);
-    sc.swayGroup.rotation.set(sway.rotX, 0, sway.rotZ);
-    sc.tableContactShadow.position.x = sway.x;
-  })()`);
-  await captureState('sway_04_stageD_slide_landing.png', 'Giai đoạn D: Từ bên phải trượt sang trái và đáp xuống');
-
-  // Settle at Rest: Hold prompt displayed, zero displacement
+  // Sweep 4 & Landing: Slide right to center and settle at rest
   await evaluate(`(() => {
     const sc = window.sceneController;
     sc.swayFinished = true;
@@ -221,8 +228,13 @@ async function main() {
     sc.state = 'SETTLED';
     if (sc.holdTrigger) sc.holdTrigger.classList.add('visible');
     sc.updateSealTriggerPosition();
+    if (window.ambientBackground) {
+      window.ambientBackground.setSwayDescent(1.0, 0);
+      window.ambientBackground.swayDescent = 1.0;
+      window.ambientBackground.render();
+    }
   })()`);
-  await captureState('sway_05_settled_at_rest.png', 'Dừng hẳn ổn định tại vị trí nghỉ, hiển thị ấn giữ con dấu sáp');
+  await captureState('sway_04_settled_at_rest.png', 'Đường vẽ 4: Trượt vào tâm đáp xuống mặt bàn tiệc, sẵn sàng ấn giữ');
 
   // Test 4: Live time-based sway execution
   console.log('\n[TEST 4] Testing live time-based sway execution...');

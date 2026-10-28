@@ -42,6 +42,10 @@ export class AmbientBackground {
     this.time = 0;
     this.progress = 0;
     this.targetProgress = 0;
+    this.swayDescent = 0;
+    this.targetSwayDescent = 0;
+    this.swayShiftX = 0;
+    this.targetSwayShiftX = 0;
 
     this.initParticles();
     this.initListeners();
@@ -53,6 +57,11 @@ export class AmbientBackground {
 
   setScrollProgress(p) {
     this.targetProgress = Math.max(0, Math.min(1, p));
+  }
+
+  setSwayDescent(descentProgress, swayNormalizedX = 0) {
+    this.targetSwayDescent = Math.max(0, Math.min(1, descentProgress));
+    this.targetSwayShiftX = swayNormalizedX;
   }
 
   initParticles() {
@@ -107,6 +116,10 @@ export class AmbientBackground {
     // Smooth scroll progress interpolation
     this.progress += (this.targetProgress - this.progress) * 0.08;
 
+    // Smooth sway descent & horizontal parallax interpolation
+    this.swayDescent += (this.targetSwayDescent - this.swayDescent) * 0.12;
+    this.swayShiftX += (this.targetSwayShiftX - this.swayShiftX) * 0.08;
+
     this.time += 0.007;
 
     this.render();
@@ -142,13 +155,19 @@ export class AmbientBackground {
       const maxScrollY = Math.max(0, natH - sh);
       const maxScrollX = Math.max(0, natW - sw);
 
-      // Continuous vertical pan: p = 0.0 (top sky & villa) -> p = 0.54 (banquet table)
+      // Continuous vertical pan:
+      // When scrolling p < 0.48: pan reaches 0.76 of maxScrollY (showing the garden walkway, lanterns, and top of table)
+      // When entering the settling sway checkpoint (p >= 0.48):
+      // Each sway swing brings the background camera down a step from 0.76 -> 1.00 of maxScrollY (onto the banquet table)!
       const panT = Math.min(1.0, Math.max(0.0, p / 0.54));
-      // Smooth cubic easing for continuous scene transition
       const easePan = panT < 0.5 ? 4 * panT * panT * panT : 1 - Math.pow(-2 * panT + 2, 3) / 2;
 
-      let sy = easePan * maxScrollY - my * 16;
-      let sx = (maxScrollX / 2) - mx * 18;
+      const scrollPanRatio = easePan * 0.76;
+      const swayPanRatio = lerp(0.76, 1.00, this.swayDescent);
+      const effectivePan = p < 0.48 ? scrollPanRatio : Math.max(scrollPanRatio, swayPanRatio);
+
+      let sy = effectivePan * maxScrollY - my * 16;
+      let sx = (maxScrollX / 2) - mx * 18 - this.swayShiftX * 22;
 
       sx = Math.max(0, Math.min(maxScrollX, sx));
       sy = Math.max(0, Math.min(maxScrollY, sy));

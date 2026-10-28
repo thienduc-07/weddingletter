@@ -76,7 +76,7 @@ export class SceneController {
     this.holdDuration = 850;       // ms required to break seal
 
     // Settling Sway State Machine (4-stage physical settle before interaction)
-    this.swayDuration = 2200;      // 2.2s graceful settling duration
+    this.swayDuration = 3400;      // 3.4s wide serpentine settling descent
     this.swayStartTime = null;
     this.isSwaying = false;
     this.swayFinished = false;
@@ -527,95 +527,96 @@ export class SceneController {
   }
 
   /**
-   * 4-Stage Settling Sway Motion (Đung đưa toàn bộ tấm thiệp 3D thống nhất)
-   * Giai đoạn A: Nghiêng mạnh sang trái (u: 0.0 -> 0.28)
-   * Giai đoạn B: Nghiêng sang phải với biên độ nhỏ hơn (u: 0.28 -> 0.52)
-   * Giai đoạn C: Dao động giảm dần (u: 0.52 -> 0.74)
-   * Giai đoạn D: Từ bên phải trượt sang trái và đáp xuống vị trí nghỉ ổn định (u: 0.74 -> 1.00)
+   * Serpentine 4-Sweep Gliding Descent & Settling Motion
+   * (Chuyển động lượn sóng ziczac 4 nhịp rộng khắp màn hình khớp chính xác nét vẽ tham chiếu)
+   * Nhịp 0 (u: 0.00 -> 0.12): Từ tâm lượn lên góc trên bên trái
+   * Nhịp 1 (u: 0.12 -> 0.38): Đường vẽ 1: Từ mép trái lượn qua mép phải, hạ dần độ cao
+   * Nhịp 2 (u: 0.38 -> 0.62): Đường vẽ 2: Từ mép phải vòng xuống lượn qua mép trái dưới sáp nến
+   * Nhịp 3 (u: 0.62 -> 0.82): Đường vẽ 3: Từ mép trái vòng xuống lượn qua bên phải ngang hàng hoa
+   * Nhịp 4 (u: 0.82 -> 1.00): Đường vẽ 4: Từ bên phải trượt êm vào tâm và đáp xuống mặt bàn tiệc
    */
   getSwayTransform(u) {
-    if (u <= 0) return { x: 0, y: 0, rotZ: 0, rotX: 0 };
-    if (u >= 1) return { x: 0, y: 0, rotZ: 0, rotX: 0 };
+    if (u <= 0) return { x: 0, y: 0, z: 0, rotZ: 0, rotX: 0, rotY: 0, bgDescent: 0 };
+    if (u >= 1) return { x: 0, y: 0, z: 0, rotZ: 0, rotX: 0, rotY: 0, bgDescent: 1 };
 
-    // Stage A: Nghiêng mạnh sang trái (Biên độ lớn nhất, quán tính mượt mà)
-    if (u < 0.28) {
-      if (u < 0.15) {
-        const s = u / 0.15;
-        const e = s * s * (3 - 2 * s);
-        return {
-          rotZ: 0.175 * e,
-          x: -0.13 * e,
-          y: 0.065 * e,
-          rotX: 0.020 * e,
-        };
-      } else {
-        const s = (u - 0.15) / 0.13;
-        const e = s * s * (3 - 2 * s);
-        return {
-          rotZ: (1 - e) * 0.175,
-          x: (1 - e) * -0.13,
-          y: 0.065 + e * (0.045 - 0.065),
-          rotX: (1 - e) * 0.020,
-        };
-      }
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const scaleX = Math.min(1.0, Math.max(0.42, w / 1200));
+
+    // Nhịp 0: Lượn êm từ tâm lên đỉnh góc trái để bắt đầu đường vẽ 1
+    if (u < 0.12) {
+      const s = u / 0.12;
+      const e = s * s * (3 - 2 * s);
+      return {
+        x: lerp(0.0, -3.4 * scaleX, e),
+        y: lerp(0.0, 0.75, e),
+        z: lerp(0.0, -0.15, e),
+        rotZ: lerp(0.0, 0.28, e),
+        rotX: lerp(0.0, 0.08, e),
+        rotY: lerp(0.0, -0.15, e),
+        bgDescent: lerp(0.0, 0.08, e),
+      };
     }
 
-    // Stage B: Nghiêng sang phải (Biên độ nhỏ hơn Stage A, chuyển hướng mượt)
-    if (u < 0.52) {
-      if (u < 0.40) {
-        const s = (u - 0.28) / 0.12;
-        const e = s * s * (3 - 2 * s);
-        return {
-          rotZ: -0.105 * e,
-          x: 0.095 * e,
-          y: 0.045 + e * (0.038 - 0.045),
-          rotX: -0.014 * e,
-        };
-      } else {
-        const s = (u - 0.40) / 0.12;
-        const e = s * s * (3 - 2 * s);
-        return {
-          rotZ: (1 - e) * -0.105,
-          x: (1 - e) * 0.095,
-          y: 0.038 + e * (0.028 - 0.038),
-          rotX: (1 - e) * -0.014,
-        };
-      }
+    // Nhịp 1 (Đường vẽ 1): Quét rộng từ mép trái sang mép phải qua thân thiệp
+    if (u < 0.38) {
+      const s = (u - 0.12) / 0.26;
+      const e = s * s * (3 - 2 * s);
+      const dip = Math.sin(s * Math.PI) * 0.28;
+      return {
+        x: lerp(-3.4 * scaleX, 3.5 * scaleX, e),
+        y: lerp(0.75, 0.20, e) - dip,
+        z: lerp(-0.15, -0.10, e),
+        rotZ: lerp(0.28, -0.24, e),
+        rotX: lerp(0.08, 0.06, e),
+        rotY: lerp(-0.15, 0.18, e),
+        bgDescent: lerp(0.08, 0.38, e), // Background đi xuống nấc 1
+      };
     }
 
-    // Stage C: Dao động giảm dần (Đung đưa trái rồi sang phải với biên độ nhỏ dần)
-    if (u < 0.74) {
-      if (u < 0.63) {
-        const s = (u - 0.52) / 0.11;
-        const wave = Math.sin(s * Math.PI);
-        return {
-          rotZ: 0.045 * wave,
-          x: -0.038 * wave,
-          y: 0.028 - s * 0.008,
-          rotX: 0.006 * wave,
-        };
-      } else {
-        const s = (u - 0.63) / 0.11;
-        const wave = Math.sin(s * Math.PI * 0.5);
-        return {
-          rotZ: -0.022 * wave,
-          x: 0.055 * wave,
-          y: 0.020 - s * 0.003,
-          rotX: -0.004 * wave,
-        };
-      }
+    // Nhịp 2 (Đường vẽ 2): Vòng từ mép phải quét chéo xuống mép trái dưới con dấu sáp
+    if (u < 0.62) {
+      const s = (u - 0.38) / 0.24;
+      const e = s * s * (3 - 2 * s);
+      const dip = Math.sin(s * Math.PI) * 0.20;
+      return {
+        x: lerp(3.5 * scaleX, -2.5 * scaleX, e),
+        y: lerp(0.20, -0.20, e) - dip,
+        z: lerp(-0.10, -0.06, e),
+        rotZ: lerp(-0.24, 0.18, e),
+        rotX: lerp(0.06, 0.04, e),
+        rotY: lerp(0.18, -0.14, e),
+        bgDescent: lerp(0.38, 0.70, e), // Background đi xuống nấc 2
+      };
     }
 
-    // Stage D: Từ bên phải trượt sang trái và đáp xuống (u: 0.74 -> 1.00)
-    // Sau nhịp dao động cuối ở bên phải, nhẹ nhàng trượt sang trái về x = 0,
-    // hạ xuống vị trí nghỉ, góc nghiêng về 0, tốc độ giảm dần, dừng hẳn ổn định.
-    const s = (u - 0.74) / 0.26;
+    // Nhịp 3 (Đường vẽ 3): Vòng từ mép trái quét chéo xuống mép phải qua dải hoa tiệc
+    if (u < 0.82) {
+      const s = (u - 0.62) / 0.20;
+      const e = s * s * (3 - 2 * s);
+      const dip = Math.sin(s * Math.PI) * 0.14;
+      return {
+        x: lerp(-2.5 * scaleX, 2.2 * scaleX, e),
+        y: lerp(-0.20, -0.42, e) - dip,
+        z: lerp(-0.06, -0.02, e),
+        rotZ: lerp(0.18, -0.10, e),
+        rotX: lerp(0.04, 0.02, e),
+        rotY: lerp(-0.14, 0.08, e),
+        bgDescent: lerp(0.70, 0.90, e), // Background đi xuống nấc 3
+      };
+    }
+
+    // Nhịp 4 (Đường vẽ 4): Từ bên phải trượt êm vào tâm và đáp xuống mặt bàn
+    const s = (u - 0.82) / 0.18;
     const e = 1 - Math.pow(1 - s, 3);
+    const dip = Math.sin(s * Math.PI) * 0.06;
     return {
-      rotZ: (1 - e) * -0.022,
-      x: (1 - e) * 0.055,
-      y: (1 - e) * 0.017,
-      rotX: (1 - e) * -0.004,
+      x: (1 - e) * 2.2 * scaleX,
+      y: lerp(-0.42, 0.0, e) - dip,
+      z: (1 - e) * -0.02,
+      rotZ: (1 - e) * -0.10,
+      rotX: (1 - e) * 0.02,
+      rotY: (1 - e) * 0.08,
+      bgDescent: lerp(0.90, 1.00, e), // Background đi xuống nấc 4 và dừng hẳn
     };
   }
 
@@ -908,6 +909,10 @@ export class SceneController {
         this.tableContactShadow.material.opacity = ease * 0.72;
       }
 
+      if (window.ambientBackground) {
+        window.ambientBackground.setSwayDescent(0.0, 0);
+      }
+
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
       // Smoothly rotate 180° around Y (0 -> Math.PI) as it lands to reveal MẶT SAU (BACK COVER) with wax seal!
@@ -1038,13 +1043,19 @@ export class SceneController {
           const sway = this.getSwayTransform(u);
 
           if (this.swayGroup) {
-            this.swayGroup.position.set(sway.x, sway.y, 0);
-            this.swayGroup.rotation.set(sway.rotX, 0, sway.rotZ);
+            this.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
+            this.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
           }
 
           if (this.tableContactShadow) {
             this.tableContactShadow.position.x = sway.x;
-            this.tableContactShadow.material.opacity = 0.72 * Math.max(0.2, 1.0 - sway.y * 2.0);
+            const heightFactor = Math.max(0.18, 1.0 - (sway.y + 0.45) * 0.7);
+            this.tableContactShadow.material.opacity = 0.72 * heightFactor;
+          }
+
+          // Advance background descent with each sway sweep!
+          if (window.ambientBackground) {
+            window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
           }
 
           if (u < 1.0) {
@@ -1063,6 +1074,9 @@ export class SceneController {
               this.tableContactShadow.position.x = 0;
               this.tableContactShadow.material.opacity = 0.72;
             }
+            if (window.ambientBackground) {
+              window.ambientBackground.setSwayDescent(1.0, 0);
+            }
             this.state = 'SETTLED';
           }
         } else {
@@ -1075,6 +1089,9 @@ export class SceneController {
           if (this.tableContactShadow) {
             this.tableContactShadow.position.x = 0;
             this.tableContactShadow.material.opacity = 0.72;
+          }
+          if (window.ambientBackground) {
+            window.ambientBackground.setSwayDescent(1.0, 0);
           }
           this.state = 'SETTLED';
         }
@@ -1114,6 +1131,9 @@ export class SceneController {
     }
     if (this.tableContactShadow) {
       this.tableContactShadow.position.x = 0;
+    }
+    if (window.ambientBackground) {
+      window.ambientBackground.setSwayDescent(1.0, 0);
     }
 
     // Keep envelope oriented showing its back with flap open
