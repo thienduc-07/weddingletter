@@ -234,6 +234,32 @@ async function main() {
   })()`);
   console.log('Scroll Draft Reversibility Check:', reverseCheck.result?.value);
 
+  // Test 6: Verify Wax Seal face is strictly facing forward and zero yaw spinning during sway
+  console.log('\n[TEST 6] Verifying Wax Seal face orientation and zero yaw spinning during sway...');
+  const sealFaceCheck = await evaluate(`(() => {
+    const sc = window.sceneController;
+    const points = [0.36, 0.40, 0.43, 0.47, 0.50];
+    const results = points.map(p => {
+      sc.applyChoreography(p);
+      return {
+        p,
+        envRotY: sc.envelope.group.rotation.y,
+        stationeryRotY: sc.stationeryGroup.rotation.y,
+        waxSealFacingForward: Math.abs(sc.envelope.group.rotation.y - Math.PI) < 0.001,
+        zeroYawSpinning: Math.abs(sc.stationeryGroup.rotation.y) < 0.001,
+        bgPanRatio: window.ambientBackground ? window.ambientBackground.targetPanRatio : null
+      };
+    });
+
+    return {
+      allFacingForward: results.every(r => r.waxSealFacingForward),
+      allZeroYaw: results.every(r => r.zeroYawSpinning),
+      backgroundDescending: results[results.length - 1].bgPanRatio > results[0].bgPanRatio,
+      results
+    };
+  })()`);
+  console.log('Wax Seal Face & Zero Yaw Check:', JSON.stringify(sealFaceCheck.result?.value, null, 2));
+
   console.log('\n======================================================');
   console.log(`CONSOLE ERRORS COUNT: ${consoleErrors.length}`);
   if (consoleErrors.length > 0) {

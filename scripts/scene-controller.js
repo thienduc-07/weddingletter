@@ -229,48 +229,6 @@ export class SceneController {
   initBanquetTable() {
     this.banquetTableGroup = new THREE.Group();
     this.banquetTableGroup.name = 'BanquetTableHeroSurface';
-
-    // 1. Draped Ivory Linen Table Runner with feathered translucency
-    // Adds tactile texture to the banquet table landing area
-    const runnerGeom = new THREE.PlaneGeometry(6.2, 12);
-    runnerGeom.rotateX(-Math.PI / 2);
-
-    const linenCanvas = document.createElement('canvas');
-    linenCanvas.width = 512;
-    linenCanvas.height = 512;
-    const lCtx = linenCanvas.getContext('2d');
-    
-    // Soft feathered ivory runner gradient
-    const lGrad = lCtx.createRadialGradient(256, 256, 120, 256, 256, 256);
-    lGrad.addColorStop(0, 'rgba(255, 253, 248, 0.40)');
-    lGrad.addColorStop(0.65, 'rgba(255, 253, 248, 0.22)');
-    lGrad.addColorStop(0.92, 'rgba(247, 241, 230, 0.06)');
-    lGrad.addColorStop(1.0, 'rgba(247, 241, 230, 0.0)');
-    lCtx.fillStyle = lGrad;
-    lCtx.fillRect(0, 0, 512, 512);
-
-    // Fine organic linen thread weft & warp
-    lCtx.fillStyle = 'rgba(215, 188, 131, 0.05)';
-    for (let x = 0; x < 512; x += 6) {
-      lCtx.fillRect(x, 0, 1.2, 512);
-    }
-    for (let y = 0; y < 512; y += 6) {
-      lCtx.fillRect(0, y, 512, 1.2);
-    }
-    const linenTex = new THREE.CanvasTexture(linenCanvas);
-
-    const runnerMat = new THREE.MeshStandardMaterial({
-      map: linenTex,
-      transparent: true,
-      opacity: 0.30,
-      roughness: 0.85,
-      metalness: 0.02,
-      depthWrite: false,
-    });
-    this.runnerMesh = new THREE.Mesh(runnerGeom, runnerMat);
-    this.runnerMesh.position.set(0, -1.346, 0);
-    this.banquetTableGroup.add(this.runnerMesh);
-
     this.scene.add(this.banquetTableGroup);
   }
 
@@ -510,7 +468,7 @@ export class SceneController {
         z: lerp(-0.2, -0.15, e),
         rotZ: lerp(0.0, 0.28, e),
         rotX: lerp(0.15, 0.08, e),
-        rotY: lerp(0.0, -0.15, e),
+        rotY: 0.0,
         bgDescent: lerp(0.0, 0.08, e),
       };
     }
@@ -526,7 +484,7 @@ export class SceneController {
         z: lerp(-0.15, -0.10, e),
         rotZ: lerp(0.28, -0.24, e),
         rotX: lerp(0.08, 0.06, e),
-        rotY: lerp(-0.15, 0.18, e),
+        rotY: 0.0,
         bgDescent: lerp(0.08, 0.38, e), // Background đi xuống nấc 1
       };
     }
@@ -542,7 +500,7 @@ export class SceneController {
         z: lerp(-0.10, -0.06, e),
         rotZ: lerp(-0.24, 0.18, e),
         rotX: lerp(0.06, 0.04, e),
-        rotY: lerp(0.18, -0.14, e),
+        rotY: 0.0,
         bgDescent: lerp(0.38, 0.70, e), // Background đi xuống nấc 2
       };
     }
@@ -558,7 +516,7 @@ export class SceneController {
         z: lerp(-0.06, -0.02, e),
         rotZ: lerp(0.18, -0.10, e),
         rotX: lerp(0.04, 0.02, e),
-        rotY: lerp(-0.14, 0.08, e),
+        rotY: 0.0,
         bgDescent: lerp(0.70, 0.90, e), // Background đi xuống nấc 3
       };
     }
@@ -573,7 +531,7 @@ export class SceneController {
       z: lerp(-0.02, 0.0, e),
       rotZ: lerp(-0.10, 0.0, e),
       rotX: lerp(0.02, 0.0, e),
-      rotY: lerp(0.08, 0.0, e),
+      rotY: 0.0,
       bgDescent: lerp(0.90, 1.00, e), // Background đi xuống nấc 4 và dừng hẳn
     };
   }
@@ -645,11 +603,6 @@ export class SceneController {
     this.scrollProgress += (this.targetScrollProgress - this.scrollProgress) * 0.12;
     if (Math.abs(this.scrollProgress - this.targetScrollProgress) < 0.0002) {
       this.scrollProgress = this.targetScrollProgress;
-    }
-
-    // Sync ambient background dynamic descent
-    if (window.ambientBackground) {
-      window.ambientBackground.setScrollProgress(this.scrollProgress);
     }
 
     // Update celebratory 3D particles and dust motes
@@ -766,6 +719,10 @@ export class SceneController {
       // Hide interactive seal trigger during flight
       if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
 
+      if (window.ambientBackground) {
+        window.ambientBackground.setPanRatio(lerp(0.0, 0.18, ease), 0);
+      }
+
       this.updateCornerHUD(p);
       return;
     }
@@ -792,10 +749,10 @@ export class SceneController {
         lerp(0.14, 0.0, t) + Math.sin(t * Math.PI) * 0.25
       );
 
-      // Sealed envelope state
+      // Sealed envelope state: rolls through 3D and turns to reveal wax seal at p = 0.36!
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
-      this.envelope.group.rotation.set(0, 0, 0);
+      this.envelope.group.rotation.set(0, ease * Math.PI, 0);
       this.envelope.setFlapAngle(0);
       this.envelope.setSealOpacity(1.0);
 
@@ -807,6 +764,10 @@ export class SceneController {
       this.scroll.setUnroll(0.0);
 
       if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
+
+      if (window.ambientBackground) {
+        window.ambientBackground.setPanRatio(lerp(0.18, 0.50, ease), 0);
+      }
 
       this.updateCornerHUD(p);
       return;
@@ -821,7 +782,9 @@ export class SceneController {
       const sway = this.getSwayTransform(u);
 
       this.stationeryGroup.position.set(sway.x, sway.y, sway.z);
-      this.stationeryGroup.rotation.set(sway.rotX, sway.rotY, sway.rotZ);
+      // "khi đung đưa cứ để mặt có sáp nến chứ đừng xoay vòng nữa"
+      // rotY is strictly 0.0 (no spinning around Y!)
+      this.stationeryGroup.rotation.set(sway.rotX, 0, sway.rotZ);
 
       if (this.swayGroup) {
         this.swayGroup.position.set(0, 0, 0);
@@ -835,14 +798,14 @@ export class SceneController {
 
       // Advance background descent with each sway sweep driven strictly by scroll progress!
       if (window.ambientBackground) {
-        window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
+        window.ambientBackground.setPanRatio(lerp(0.50, 1.00, sway.bgDescent), sway.x / 3.5);
       }
 
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
-      // Smoothly rotate 180° around Y (0 -> Math.PI) as it lands to reveal MẶT SAU (BACK COVER) with wax seal!
-      const flipEase = u > 0.15 ? easeInOutCubic((u - 0.15) / 0.85) : 0;
-      this.envelope.group.rotation.set(0, flipEase * Math.PI, 0);
+      // "khi đung đưa cứ để mặt có sáp nến chứ đừng xoay vòng nữa":
+      // Wax seal face directly facing forward at all times! No spinning/flipping!
+      this.envelope.group.rotation.set(0, Math.PI, 0);
       this.envelope.setFlapAngle(0);
       this.envelope.setSealOpacity(1.0);
 
@@ -887,7 +850,7 @@ export class SceneController {
       }
 
       if (window.ambientBackground) {
-        window.ambientBackground.setSwayDescent(1.0, 0);
+        window.ambientBackground.setPanRatio(1.00, 0);
       }
 
       this.envelope.group.visible = true;
@@ -978,7 +941,7 @@ export class SceneController {
       this.swayGroup.rotation.set(0, 0, 0);
     }
     if (window.ambientBackground) {
-      window.ambientBackground.setSwayDescent(1.0, 0);
+      window.ambientBackground.setPanRatio(1.00, 0);
     }
 
     // Keep envelope oriented showing its back with flap open

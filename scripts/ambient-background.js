@@ -40,10 +40,8 @@ export class AmbientBackground {
     this.bgImage.src = 'assets/garden_wedding_bg.jpg';
 
     this.time = 0;
-    this.progress = 0;
-    this.targetProgress = 0;
-    this.swayDescent = 0;
-    this.targetSwayDescent = 0;
+    this.panRatio = 0;
+    this.targetPanRatio = 0;
     this.swayShiftX = 0;
     this.targetSwayShiftX = 0;
 
@@ -55,12 +53,24 @@ export class AmbientBackground {
     requestAnimationFrame(this.animate);
   }
 
+  setPanRatio(ratio, swayShiftX = 0) {
+    this.targetPanRatio = Math.max(0, Math.min(1, ratio));
+    this.targetSwayShiftX = swayShiftX;
+  }
+
   setScrollProgress(p) {
-    this.targetProgress = Math.max(0, Math.min(1, p));
+    if (p < 0.14) {
+      this.targetPanRatio = (p / 0.14) * 0.18;
+    } else if (p < 0.36) {
+      const t = (p - 0.14) / 0.22;
+      this.targetPanRatio = lerp(0.18, 0.50, t * t * (3 - 2 * t));
+    } else {
+      this.targetPanRatio = lerp(0.50, 1.00, Math.min(1, (p - 0.36) / 0.14));
+    }
   }
 
   setSwayDescent(descentProgress, swayNormalizedX = 0) {
-    this.targetSwayDescent = Math.max(0, Math.min(1, descentProgress));
+    this.targetPanRatio = lerp(0.50, 1.00, Math.max(0, Math.min(1, descentProgress)));
     this.targetSwayShiftX = swayNormalizedX;
   }
 
@@ -113,12 +123,13 @@ export class AmbientBackground {
     this.mouse.x += (this.mouse.targetX - this.mouse.x) * 0.04;
     this.mouse.y += (this.mouse.targetY - this.mouse.y) * 0.04;
 
-    // Smooth scroll progress interpolation
-    this.progress += (this.targetProgress - this.progress) * 0.08;
+    // Follow pan ratio smoothly and responsively (no floaty lag!)
+    this.panRatio += (this.targetPanRatio - this.panRatio) * 0.20;
+    if (Math.abs(this.panRatio - this.targetPanRatio) < 0.0005) {
+      this.panRatio = this.targetPanRatio;
+    }
 
-    // Smooth sway descent & horizontal parallax interpolation
-    this.swayDescent += (this.targetSwayDescent - this.swayDescent) * 0.12;
-    this.swayShiftX += (this.targetSwayShiftX - this.swayShiftX) * 0.08;
+    this.swayShiftX += (this.targetSwayShiftX - this.swayShiftX) * 0.12;
 
     this.time += 0.007;
 
@@ -132,7 +143,6 @@ export class AmbientBackground {
     const mx = this.mouse.x;
     const my = this.mouse.y;
     const t = this.time;
-    const p = this.progress;
 
     // -------------------------------------------------------------------------
     // LAYER 1: Dynamic Continuous Outdoor Garden Wedding Scene (Scroll Descent)
@@ -146,37 +156,30 @@ export class AmbientBackground {
       let sw = natW;
       let sh = natW / screenAspect;
 
-      if (sh > natH) {
-        sh = natH;
-        sw = natH * screenAspect;
+      // Ensure vertical panorama travel exists across all devices (including tall portrait phones)
+      const maxAllowedSh = natH * 0.72;
+      if (sh > maxAllowedSh) {
+        sh = maxAllowedSh;
+        sw = sh * screenAspect;
       }
 
-      // Maximum vertical camera travel in the vertical panorama
+      // Maximum camera travel in image coordinates
       const maxScrollY = Math.max(0, natH - sh);
       const maxScrollX = Math.max(0, natW - sw);
 
-      // Continuous vertical pan:
-      // When scrolling p < 0.48: pan reaches 0.76 of maxScrollY (showing the garden walkway, lanterns, and top of table)
-      // When entering the settling sway checkpoint (p >= 0.48):
-      // Each sway swing brings the background camera down a step from 0.76 -> 1.00 of maxScrollY (onto the banquet table)!
-      const panT = Math.min(1.0, Math.max(0.0, p / 0.54));
-      const easePan = panT < 0.5 ? 4 * panT * panT * panT : 1 - Math.pow(-2 * panT + 2, 3) / 2;
-
-      const scrollPanRatio = easePan * 0.76;
-      const swayPanRatio = lerp(0.76, 1.00, this.swayDescent);
-      const effectivePan = p < 0.48 ? scrollPanRatio : Math.max(scrollPanRatio, swayPanRatio);
-
-      let sy = effectivePan * maxScrollY - my * 16;
-      let sx = (maxScrollX / 2) - mx * 18 - this.swayShiftX * 22;
+      // Unified, smooth vertical descent:
+      // panRatio 0.00: Top of panorama (sunset sky, olive canopy, fairy lights)
+      // panRatio 0.50: Midground (lantern walkway, Tuscan arch, overview of table)
+      // panRatio 1.00: Banquet table (ivory tablecloth, candles, rose centerpiece)
+      let sy = this.panRatio * maxScrollY - my * 14;
+      let sx = (maxScrollX / 2) - mx * 16 - this.swayShiftX * 18;
 
       sx = Math.max(0, Math.min(maxScrollX, sx));
       sy = Math.max(0, Math.min(maxScrollY, sy));
 
       // Dynamic depth-of-field blur:
-      // In sky/flight: subtle 1.5px blur so sunset & landscape are atmospheric
-      // On banquet table: 3.5px soft optical bokeh so 3D card/letter has maximum clarity
-      const blurPx = lerp(1.5, 3.8, Math.min(1.0, p / 0.60));
-      const bright = lerp(1.06, 1.02, Math.min(1.0, p / 0.60));
+      const blurPx = lerp(0.8, 2.6, this.panRatio);
+      const bright = lerp(1.04, 1.01, this.panRatio);
 
       ctx.save();
       ctx.filter = `blur(${blurPx.toFixed(1)}px) brightness(${bright.toFixed(2)})`;
@@ -211,8 +214,8 @@ export class AmbientBackground {
     // -------------------------------------------------------------------------
     // LAYER 2: Warm Afternoon Sunrays & Banquet Table Candlelight Pools
     // -------------------------------------------------------------------------
-    // Golden sun glow: strongest in sky during arrival flight (p in [0, 0.40])
-    const sunIntensity = Math.max(0.12, 0.35 * (1 - Math.min(1.0, p / 0.70)));
+    // Golden sun glow: strongest in sky during arrival flight
+    const sunIntensity = Math.max(0.12, 0.35 * (1 - Math.min(1.0, this.panRatio * 1.2)));
     const sunX = w * 0.82 + Math.sin(t * 0.3) * 25 + mx * 20;
     const sunY = h * 0.10 + my * 12;
     const sunR = Math.min(w, h) * 0.75;
@@ -223,9 +226,9 @@ export class AmbientBackground {
     ctx.fillStyle = sunGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // Banquet table candle glow: intensifies as stationery lands on table (p > 0.36)
-    if (p > 0.25) {
-      const candleAlpha = Math.min(1.0, (p - 0.25) / 0.30) * 0.22;
+    // Banquet table candle glow: intensifies as stationery lands on table
+    if (this.panRatio > 0.40) {
+      const candleAlpha = Math.min(1.0, (this.panRatio - 0.40) / 0.45) * 0.22;
       const candle1X = w * 0.22 + mx * 24;
       const candle1Y = h * 0.76 + my * 16;
       const c1Grad = ctx.createRadialGradient(candle1X, candle1Y, 0, candle1X, candle1Y, w * 0.28);
