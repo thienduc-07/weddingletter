@@ -404,8 +404,6 @@ export class Envelope3DMesh {
     this.backMesh = new THREE.Mesh(backGeom, this.blushPaperMat);
     this.backMesh.position.set(0, 0, -D / 2);
     this.backMesh.rotation.y = Math.PI; // Faces -Z (Back side)
-    this.backMesh.castShadow = true;
-    this.backMesh.receiveShadow = true;
     this.group.add(this.backMesh);
 
     // Diagonal stationery fold accents on the back face (luxury craftsmanship)
@@ -448,8 +446,6 @@ export class Envelope3DMesh {
     const frontBaseGeom = new THREE.ShapeGeometry(frontBaseShape, 20);
     this.frontBaseMesh = new THREE.Mesh(frontBaseGeom, this.blushPaperMat);
     this.frontBaseMesh.position.set(0, 0, D / 2);
-    this.frontBaseMesh.castShadow = true;
-    this.frontBaseMesh.receiveShadow = true;
     this.group.add(this.frontBaseMesh);
 
     // B. Mounted Front Cover Panel (Deliberately smaller: 3.12 x 2.04)
@@ -471,8 +467,6 @@ export class Envelope3DMesh {
     this.frontPanelMesh = new THREE.Mesh(frontPanelGeom, this.envelopeFrontMat);
     // Sits cleanly on the front face (+Z), slightly raised by 0.002 to create the tactile 2-ply card relief
     this.frontPanelMesh.position.set(0, 0, D / 2 + 0.002);
-    this.frontPanelMesh.castShadow = true;
-    this.frontPanelMesh.receiveShadow = true;
     this.group.add(this.frontPanelMesh);
 
     // =========================================================================
@@ -508,8 +502,6 @@ export class Envelope3DMesh {
     uGeom.translate(0, 0, -D / 2);
 
     const uCasing = new THREE.Mesh(uGeom, this.edgeMat);
-    uCasing.castShadow = true;
-    uCasing.receiveShadow = true;
     this.group.add(uCasing);
 
     // 4. Ivory Interior Lining inside the pocket
@@ -517,7 +509,6 @@ export class Envelope3DMesh {
     const innerGeom = new THREE.ShapeGeometry(innerShape, 12);
     const innerMesh = new THREE.Mesh(innerGeom, this.innerIvoryMat);
     innerMesh.position.set(0, 0, 0);
-    innerMesh.receiveShadow = true;
     this.group.add(innerMesh);
   }
 
@@ -554,7 +545,6 @@ export class Envelope3DMesh {
     this.flapMesh = new THREE.Mesh(flapGeom, this.blushPaperMat);
     this.flapMesh.position.set(0, 0, -0.003);
     this.flapMesh.rotation.y = Math.PI; // Faces -Z (Back side)
-    this.flapMesh.castShadow = true;
     this.flapPivot.add(this.flapMesh);
 
     // Inner lining of the flap (revealed when opened)
@@ -608,7 +598,6 @@ export class Envelope3DMesh {
     waxGeom.translate(0, 0, -0.021);
 
     this.sealMesh = new THREE.Mesh(waxGeom, this.goldSealMat);
-    this.sealMesh.castShadow = true;
     this.sealGroup.add(this.sealMesh);
 
     // 2. Raised Wax Rim (Organic melted wax pushed upward by the brass seal press)

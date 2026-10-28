@@ -6,9 +6,9 @@ async function main() {
   const port = 9256;
 
   const proc = spawn(chromePath, [
-    '--headless',
+    '--headless=new',
     `--remote-debugging-port=${port}`,
-    '--user-data-dir=/tmp/chrome-test-profile-sway',
+    `--user-data-dir=/tmp/chrome-test-profile-${Date.now()}`,
     '--no-first-run',
     '--window-size=1440,900',
     'http://localhost:4500/'
@@ -134,15 +134,28 @@ async function main() {
   })()`);
   console.log('Phase 2 -> Phase 3 Continuity:', continuityCheck.result?.value);
 
-  // Test 2: Mathematical evaluation of getSwayTransform across sample points
-  console.log('\n[TEST 2] Evaluating 4-Stage Sway Trajectory...');
+  // Test 2: Shadow removal verification
+  console.log('\n[TEST 2] Verifying All Shadows are Deleted...');
+  const shadowCheck = await evaluate(`(() => {
+    const sc = window.sceneController;
+    return {
+      shadowMapDisabled: sc.renderer.shadowMap.enabled === false,
+      keyLightNoShadow: !sc.keyLight.castShadow,
+      noTableContactShadow: !sc.tableContactShadow,
+      cssShadowHidden: window.getComputedStyle(document.querySelector('.envelope-floor-shadow'))?.display === 'none'
+    };
+  })()`);
+  console.log('Shadow Removal Check:', shadowCheck.result?.value);
+
+  // Test 3: Mathematical evaluation of getSwayTransform across sample points
+  console.log('\n[TEST 3] Evaluating Scroll Draft Serpentine Trajectory...');
   const trajectoryCheck = await evaluate(`(() => {
     const sc = window.sceneController;
     const apex0 = sc.getSwayTransform(0.12); // Apex 0 (top-left)
     const sweep1 = sc.getSwayTransform(0.38); // Sweep 1 (far right)
     const sweep2 = sc.getSwayTransform(0.62); // Sweep 2 (left under seal)
     const sweep3 = sc.getSwayTransform(0.82); // Sweep 3 (right across flowers)
-    const sweep4 = sc.getSwayTransform(1.00); // Sweep 4 (land at rest)
+    const sweep4 = sc.getSwayTransform(1.00); // Sweep 4 (land at table y = -0.24)
 
     return {
       apex0_topLeft: apex0,
@@ -156,129 +169,70 @@ async function main() {
         sweep2.bgDescent > sweep1.bgDescent &&
         sweep3.bgDescent > sweep2.bgDescent &&
         sweep4.bgDescent >= sweep3.bgDescent,
-      stopsCleanlyAtZero: sweep4.x === 0 && sweep4.y === 0 && sweep4.rotZ === 0 && sweep4.rotX === 0
+      landsCleanlyOnTable: Math.abs(sweep4.x) < 0.001 && Math.abs(sweep4.y - (-0.24)) < 0.001 && Math.abs(sweep4.rotZ) < 0.001
     };
   })()`);
   console.log('Serpentine Sway Trajectory Check:', JSON.stringify(trajectoryCheck.result?.value, null, 2));
 
-  // Test 3: Visual inspection and screenshot of each sway phase
-  console.log('\n[TEST 3] Capturing 4 Serpentine Sweeps with Background Step Descent...');
+  // Test 4: Visual inspection and screenshot of each scroll draft sway phase
+  console.log('\n[TEST 4] Capturing 4 Scroll Draft Sweeps with Background Step Descent...');
 
+  // Sweep 1: p = 0.40 (u ≈ 0.28) Far left to far right across the screen
   await evaluate(`(() => {
     const sc = window.sceneController;
     sc.envelopeOpened = false;
+    sc.scrollProgress = 0.40;
+    sc.targetScrollProgress = 0.40;
+    sc.applyChoreography(0.40);
+  })()`);
+  await captureState('sway_01_sweep1_left_to_right.png', 'Đường vẽ 1: Quét từ mép trái sang mép phải (p=0.40), background hạ nấc 1');
+
+  // Sweep 2: p = 0.43 (u ≈ 0.50) Far right to left under wax seal
+  await evaluate(`(() => {
+    const sc = window.sceneController;
+    sc.scrollProgress = 0.43;
+    sc.targetScrollProgress = 0.43;
+    sc.applyChoreography(0.43);
+  })()`);
+  await captureState('sway_02_sweep2_right_to_left.png', 'Đường vẽ 2: Vòng từ mép phải quét chéo xuống mép trái (p=0.43), background hạ nấc 2');
+
+  // Sweep 3: p = 0.47 (u ≈ 0.78) Left to right across flower line
+  await evaluate(`(() => {
+    const sc = window.sceneController;
+    sc.scrollProgress = 0.47;
+    sc.targetScrollProgress = 0.47;
+    sc.applyChoreography(0.47);
+  })()`);
+  await captureState('sway_03_sweep3_across_flowers.png', 'Đường vẽ 3: Vòng từ mép trái quét chéo sang dải hoa bàn tiệc (p=0.47), background hạ nấc 3');
+
+  // Sweep 4 & Landing: p = 0.50 Settled at rest on table
+  await evaluate(`(() => {
+    const sc = window.sceneController;
     sc.scrollProgress = 0.50;
     sc.targetScrollProgress = 0.50;
     sc.applyChoreography(0.50);
-  })()`);
-
-  // Sweep 1: Far left to far right across the screen
-  await evaluate(`(() => {
-    const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.26); // Mid Sweep 1 crossing screen
-    sc.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
-    sc.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
-    sc.tableContactShadow.position.x = sway.x;
-    if (window.ambientBackground) {
-      window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
-      window.ambientBackground.swayDescent = sway.bgDescent;
-      window.ambientBackground.render();
-    }
-  })()`);
-  await captureState('sway_01_sweep1_left_to_right.png', 'Đường vẽ 1: Quét từ mép trái sang mép phải, background hạ nấc 1');
-
-  // Sweep 2: Far right to left under wax seal
-  await evaluate(`(() => {
-    const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.50); // Mid Sweep 2 passing under wax seal
-    sc.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
-    sc.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
-    sc.tableContactShadow.position.x = sway.x;
-    if (window.ambientBackground) {
-      window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
-      window.ambientBackground.swayDescent = sway.bgDescent;
-      window.ambientBackground.render();
-    }
-  })()`);
-  await captureState('sway_02_sweep2_right_to_left.png', 'Đường vẽ 2: Vòng từ mép phải quét chéo xuống mép trái dưới sáp nến, background hạ nấc 2');
-
-  // Sweep 3: Left to right across flower line
-  await evaluate(`(() => {
-    const sc = window.sceneController;
-    const sway = sc.getSwayTransform(0.72); // Mid Sweep 3 crossing table flowers
-    sc.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
-    sc.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
-    sc.tableContactShadow.position.x = sway.x;
-    if (window.ambientBackground) {
-      window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
-      window.ambientBackground.swayDescent = sway.bgDescent;
-      window.ambientBackground.render();
-    }
-  })()`);
-  await captureState('sway_03_sweep3_across_flowers.png', 'Đường vẽ 3: Vòng từ mép trái quét chéo sang dải hoa bàn tiệc, background hạ nấc 3');
-
-  // Sweep 4 & Landing: Slide right to center and settle at rest
-  await evaluate(`(() => {
-    const sc = window.sceneController;
-    sc.swayFinished = true;
-    sc.isSwaying = false;
-    sc.swayGroup.position.set(0, 0, 0);
-    sc.swayGroup.rotation.set(0, 0, 0);
-    sc.tableContactShadow.position.x = 0;
-    sc.state = 'SETTLED';
-    if (sc.holdTrigger) sc.holdTrigger.classList.add('visible');
     sc.updateSealTriggerPosition();
-    if (window.ambientBackground) {
-      window.ambientBackground.setSwayDescent(1.0, 0);
-      window.ambientBackground.swayDescent = 1.0;
-      window.ambientBackground.render();
-    }
   })()`);
-  await captureState('sway_04_settled_at_rest.png', 'Đường vẽ 4: Trượt vào tâm đáp xuống mặt bàn tiệc, sẵn sàng ấn giữ');
+  await captureState('sway_04_settled_at_rest.png', 'Đường vẽ 4: Trượt vào tâm đáp xuống mặt bàn tiệc (p=0.50), sẵn sàng ấn giữ');
 
-  // Test 4: Live time-based sway execution
-  console.log('\n[TEST 4] Testing live time-based sway execution...');
-  const liveSwayResult = await evaluate(`(async () => {
+  // Test 5: Verify Scroll Draft bidirectional control (scroll back reverses path)
+  console.log('\n[TEST 5] Testing Scroll Draft bidirectional reverse control...');
+  const reverseCheck = await evaluate(`(() => {
     const sc = window.sceneController;
-    // Reset to start of Phase 4
-    sc.swayFinished = false;
-    sc.isSwaying = false;
-    sc.swayStartTime = null;
-    sc.applyChoreography(0.50, performance.now());
+    sc.applyChoreography(0.43); // mid sweep 2
+    const posForward = { x: sc.stationeryGroup.position.x, y: sc.stationeryGroup.position.y };
 
-    const startState = sc.state;
-    const startSwaying = sc.isSwaying;
-
-    // Simulate 1.1s of elapsed time (midway through sway)
-    const midTime = sc.swayStartTime + 1100;
-    sc.applyChoreography(0.50, midTime);
-    const midState = sc.state;
-    const midPosX = sc.swayGroup.position.x;
-    const midRotZ = sc.swayGroup.rotation.z;
-
-    // Simulate 2.3s of elapsed time (past swayDuration = 2200ms)
-    const endTime = sc.swayStartTime + 2300;
-    sc.applyChoreography(0.50, endTime);
-    const endState = sc.state;
-    const endFinished = sc.swayFinished;
-    const endPosX = sc.swayGroup.position.x;
-    const endRotZ = sc.swayGroup.rotation.z;
-    const holdVisible = sc.holdTrigger?.classList.contains('visible');
+    sc.applyChoreography(0.50); // land
+    sc.applyChoreography(0.43); // reverse back
+    const posReverse = { x: sc.stationeryGroup.position.x, y: sc.stationeryGroup.position.y };
 
     return {
-      startState,
-      startSwaying,
-      midState,
-      midPosX,
-      midRotZ,
-      endState,
-      endFinished,
-      endPosX,
-      endRotZ,
-      holdVisible,
+      posForward,
+      posReverse,
+      isReversible: Math.abs(posForward.x - posReverse.x) < 0.001 && Math.abs(posForward.y - posReverse.y) < 0.001
     };
   })()`);
-  console.log('Live Sway Execution Result:', liveSwayResult.result?.value);
+  console.log('Scroll Draft Reversibility Check:', reverseCheck.result?.value);
 
   console.log('\n======================================================');
   console.log(`CONSOLE ERRORS COUNT: ${consoleErrors.length}`);

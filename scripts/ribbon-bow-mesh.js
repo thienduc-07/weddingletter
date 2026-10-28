@@ -55,8 +55,6 @@ export class RibbonBowMesh {
     bandGeom.rotateZ(Math.PI / 2);
 
     this.bandMesh = new THREE.Mesh(bandGeom, this.satinMat);
-    this.bandMesh.castShadow = true;
-    this.bandMesh.receiveShadow = true;
     this.group.add(this.bandMesh);
   }
 
@@ -68,7 +66,6 @@ export class RibbonBowMesh {
     this.knotMesh = new THREE.Mesh(knotGeom, this.satinDeepMat);
     // Position knot safely in front of roll apex
     this.knotMesh.position.set(0, 0, this.rollRadius + 0.055);
-    this.knotMesh.castShadow = true;
     this.group.add(this.knotMesh);
   }
 
@@ -86,7 +83,6 @@ export class RibbonBowMesh {
     ]);
     const leftLoopGeom = new THREE.TubeGeometry(leftCurve, 32, 0.038, 12, true);
     this.leftLoop = new THREE.Mesh(leftLoopGeom, this.satinMat);
-    this.leftLoop.castShadow = true;
     this.loopsGroup.add(this.leftLoop);
 
     // Right volumetric satin loop
@@ -99,7 +95,6 @@ export class RibbonBowMesh {
     ]);
     const rightLoopGeom = new THREE.TubeGeometry(rightCurve, 32, 0.038, 12, true);
     this.rightLoop = new THREE.Mesh(rightLoopGeom, this.satinMat);
-    this.rightLoop.castShadow = true;
     this.loopsGroup.add(this.rightLoop);
 
     this.group.add(this.loopsGroup);
@@ -118,7 +113,6 @@ export class RibbonBowMesh {
     ]);
     const leftTailGeom = new THREE.TubeGeometry(leftTailCurve, 24, 0.032, 10, false);
     this.leftTail = new THREE.Mesh(leftTailGeom, this.satinMat);
-    this.leftTail.castShadow = true;
     this.tailsGroup.add(this.leftTail);
 
     // Right draped tail - curves gracefully forward and downward
@@ -130,7 +124,6 @@ export class RibbonBowMesh {
     ]);
     const rightTailGeom = new THREE.TubeGeometry(rightTailCurve, 24, 0.032, 10, false);
     this.rightTail = new THREE.Mesh(rightTailGeom, this.satinMat);
-    this.rightTail.castShadow = true;
     this.tailsGroup.add(this.rightTail);
 
     this.group.add(this.tailsGroup);

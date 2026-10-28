@@ -91,8 +91,6 @@ export class LetterScrollMesh {
     cylGeom.rotateZ(Math.PI / 2);
 
     this.rollMesh = new THREE.Mesh(cylGeom, this.outerMat);
-    this.rollMesh.castShadow = true;
-    this.rollMesh.receiveShadow = true;
     this.cylinderGroup.add(this.rollMesh);
 
     // Inner spiral curl layer (gives authentic coiled paper depth)
@@ -132,15 +130,11 @@ export class LetterScrollMesh {
 
     // Front Face (Calligraphy Wedding Decree - strictly FrontSide, never mirrored)
     this.unrollMesh = new THREE.Mesh(this.unrollGeom, this.innerMat);
-    this.unrollMesh.castShadow = true;
-    this.unrollMesh.receiveShadow = true;
     this.unrollMesh.visible = false;
     this.paperGroup.add(this.unrollMesh);
 
     // Reverse Face (Blank Warm Ivory Cotton Parchment - strictly BackSide)
     this.backUnrollMesh = new THREE.Mesh(this.unrollGeom, this.backMat);
-    this.backUnrollMesh.castShadow = true;
-    this.backUnrollMesh.receiveShadow = true;
     this.backUnrollMesh.visible = false;
     this.paperGroup.add(this.backUnrollMesh);
 

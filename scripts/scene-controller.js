@@ -75,12 +75,6 @@ export class SceneController {
     this.holdStartTime = 0;
     this.holdDuration = 850;       // ms required to break seal
 
-    // Settling Sway State Machine (4-stage physical settle before interaction)
-    this.swayDuration = 3400;      // 3.4s wide serpentine settling descent
-    this.swayStartTime = null;
-    this.isSwaying = false;
-    this.swayFinished = false;
-
     // Mouse & Parallax
     this.mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
     this.isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -121,8 +115,7 @@ export class SceneController {
 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.enabled = false;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
 
@@ -149,16 +142,6 @@ export class SceneController {
     // 2. Large Soft Key Light (Warm Champagne)
     this.keyLight = new THREE.DirectionalLight(0xFFF4E6, 2.3);
     this.keyLight.position.set(4.0, 5.5, 5.0);
-    this.keyLight.castShadow = true;
-    this.keyLight.shadow.mapSize.width = 2048;
-    this.keyLight.shadow.mapSize.height = 2048;
-    this.keyLight.shadow.camera.near = 0.5;
-    this.keyLight.shadow.camera.far = 25;
-    this.keyLight.shadow.camera.left = -8;
-    this.keyLight.shadow.camera.right = 8;
-    this.keyLight.shadow.camera.top = 8;
-    this.keyLight.shadow.camera.bottom = -8;
-    this.keyLight.shadow.bias = -0.0002;
     this.scene.add(this.keyLight);
 
     // 3. Delicate Blush Fill Light
@@ -287,31 +270,6 @@ export class SceneController {
     this.runnerMesh = new THREE.Mesh(runnerGeom, runnerMat);
     this.runnerMesh.position.set(0, -1.346, 0);
     this.banquetTableGroup.add(this.runnerMesh);
-
-    // 2. Realistic Ambient Occlusion Contact Shadow right beneath the envelope
-    const shadowCanvas = document.createElement('canvas');
-    shadowCanvas.width = 512;
-    shadowCanvas.height = 256;
-    const sCtx = shadowCanvas.getContext('2d');
-    const sGrad = sCtx.createRadialGradient(256, 128, 20, 256, 128, 240);
-    sGrad.addColorStop(0, 'rgba(42, 18, 24, 0.70)');
-    sGrad.addColorStop(0.35, 'rgba(42, 18, 24, 0.35)');
-    sGrad.addColorStop(0.70, 'rgba(75, 55, 60, 0.10)');
-    sGrad.addColorStop(1.0, 'rgba(75, 55, 60, 0.0)');
-    sCtx.fillStyle = sGrad;
-    sCtx.fillRect(0, 0, 512, 256);
-
-    const shadowTex = new THREE.CanvasTexture(shadowCanvas);
-    const shadowGeom = new THREE.PlaneGeometry(4.6, 2.4);
-    shadowGeom.rotateX(-Math.PI / 2);
-    this.tableContactShadow = new THREE.Mesh(shadowGeom, new THREE.MeshBasicMaterial({
-      map: shadowTex,
-      transparent: true,
-      opacity: 0.0,
-      depthWrite: false,
-    }));
-    this.tableContactShadow.position.set(0, -1.342, 0);
-    this.banquetTableGroup.add(this.tableContactShadow);
 
     this.scene.add(this.banquetTableGroup);
   }
@@ -536,22 +494,22 @@ export class SceneController {
    * Nhịp 4 (u: 0.82 -> 1.00): Đường vẽ 4: Từ bên phải trượt êm vào tâm và đáp xuống mặt bàn tiệc
    */
   getSwayTransform(u) {
-    if (u <= 0) return { x: 0, y: 0, z: 0, rotZ: 0, rotX: 0, rotY: 0, bgDescent: 0 };
-    if (u >= 1) return { x: 0, y: 0, z: 0, rotZ: 0, rotX: 0, rotY: 0, bgDescent: 1 };
+    if (u <= 0) return { x: 0.45, y: 0.35, z: -0.2, rotX: 0.15, rotY: 0.0, rotZ: 0.0, bgDescent: 0 };
+    if (u >= 1) return { x: 0.0, y: -0.24, z: 0.0, rotX: 0.0, rotY: 0.0, rotZ: 0.0, bgDescent: 1 };
 
     const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const scaleX = Math.min(1.0, Math.max(0.42, w / 1200));
 
-    // Nhịp 0: Lượn êm từ tâm lên đỉnh góc trái để bắt đầu đường vẽ 1
+    // Nhịp 0 (u: 0.00 -> 0.12): Lượn êm từ kết thúc Phase 2 (0.45, 0.35, -0.2) lên đỉnh góc trái (-3.4, 0.75) để bắt đầu đường vẽ 1
     if (u < 0.12) {
       const s = u / 0.12;
       const e = s * s * (3 - 2 * s);
       return {
-        x: lerp(0.0, -3.4 * scaleX, e),
-        y: lerp(0.0, 0.75, e),
-        z: lerp(0.0, -0.15, e),
+        x: lerp(0.45, -3.4 * scaleX, e),
+        y: lerp(0.35, 0.75, e),
+        z: lerp(-0.2, -0.15, e),
         rotZ: lerp(0.0, 0.28, e),
-        rotX: lerp(0.0, 0.08, e),
+        rotX: lerp(0.15, 0.08, e),
         rotY: lerp(0.0, -0.15, e),
         bgDescent: lerp(0.0, 0.08, e),
       };
@@ -596,7 +554,7 @@ export class SceneController {
       const dip = Math.sin(s * Math.PI) * 0.14;
       return {
         x: lerp(-2.5 * scaleX, 2.2 * scaleX, e),
-        y: lerp(-0.20, -0.42, e) - dip,
+        y: lerp(-0.20, -0.32, e) - dip,
         z: lerp(-0.06, -0.02, e),
         rotZ: lerp(0.18, -0.10, e),
         rotX: lerp(0.04, 0.02, e),
@@ -605,17 +563,17 @@ export class SceneController {
       };
     }
 
-    // Nhịp 4 (Đường vẽ 4): Từ bên phải trượt êm vào tâm và đáp xuống mặt bàn
+    // Nhịp 4 (Đường vẽ 4): Từ bên phải trượt êm vào tâm và đáp xuống mặt bàn tiệc y = -0.24
     const s = (u - 0.82) / 0.18;
     const e = 1 - Math.pow(1 - s, 3);
     const dip = Math.sin(s * Math.PI) * 0.06;
     return {
-      x: (1 - e) * 2.2 * scaleX,
-      y: lerp(-0.42, 0.0, e) - dip,
-      z: (1 - e) * -0.02,
-      rotZ: (1 - e) * -0.10,
-      rotX: (1 - e) * 0.02,
-      rotY: (1 - e) * 0.08,
+      x: lerp(2.2 * scaleX, 0.0, e),
+      y: lerp(-0.32, -0.24, e) - dip,
+      z: lerp(-0.02, 0.0, e),
+      rotZ: lerp(-0.10, 0.0, e),
+      rotX: lerp(0.02, 0.0, e),
+      rotY: lerp(0.08, 0.0, e),
       bgDescent: lerp(0.90, 1.00, e), // Background đi xuống nấc 4 và dừng hẳn
     };
   }
@@ -805,9 +763,6 @@ export class SceneController {
       this.scroll.setUntying(0.0);
       this.scroll.setUnroll(0.0);
 
-      // Table contact shadow invisible during flight
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
-
       // Hide interactive seal trigger during flight
       if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
 
@@ -851,7 +806,6 @@ export class SceneController {
       this.scroll.setUntying(0.0);
       this.scroll.setUnroll(0.0);
 
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
       if (this.holdTrigger) this.holdTrigger.classList.remove('visible');
 
       this.updateCornerHUD(p);
@@ -859,69 +813,40 @@ export class SceneController {
     }
 
     // =========================================================================
-    // PHASE 3: THE LANDING (p = 0.36 -> 0.48)
+    // PHASE 3: SCROLL DRAFT SERPENTINE DESCENT (p = 0.36 -> 0.50)
     // =========================================================================
-    if (p < 0.48) {
-      this.state = 'LANDING';
-      const t = (p - 0.36) / 0.12;
-      const ease = easeInOutCubic(t);
+    if (p < 0.50) {
+      this.state = 'SCROLL_DRAFT';
+      const u = (p - 0.36) / 0.14;
+      const sway = this.getSwayTransform(u);
 
-      // Decelerates smoothly onto the banquet table surface at y = -0.24
-      const targetPosY = -0.24;
-      const posY = lerp(0.35, targetPosY, ease);
-      const posX = lerp(0.45, 0.0, ease);
-      const posZ = lerp(-0.2, 0.0, ease);
+      this.stationeryGroup.position.set(sway.x, sway.y, sway.z);
+      this.stationeryGroup.rotation.set(sway.rotX, sway.rotY, sway.rotZ);
 
-      // Subtle, realistic physical landing settle bounce
-      let bounce = 0;
-      if (t > 0.65) {
-        const bT = (t - 0.65) / 0.35;
-        bounce = Math.sin(bT * Math.PI) * 0.024 * Math.exp(-bT * 3.5);
-      }
-
-      this.stationeryGroup.position.set(posX, posY + bounce, posZ);
-
-      // Rotations level out cleanly to upright sitting posture on the table
-      // Fix single-frame jump: Phase 2 ends at (0.15, 0.0, 0.0). Phase 3 smoothly eases from 0.15 to 0.0.
-      this.stationeryGroup.rotation.set(
-        lerp(0.15, 0.0, ease),
-        0.0,
-        0.0
-      );
-
-      // Reset sway state while in Phase 3 so sway runs fresh when entering Phase 4
-      this.swayFinished = false;
-      this.isSwaying = false;
-      this.swayStartTime = null;
       if (this.swayGroup) {
         this.swayGroup.position.set(0, 0, 0);
         this.swayGroup.rotation.set(0, 0, 0);
       }
 
       // Camera gently tracks down toward banquet table
-      this.baseCamY = lerp(0.0, -0.20, ease);
-      this.baseCamZ = lerp(envCamZ, envCamZ * (7.2 / 7.5), ease);
-      this.baseLookY = lerp(0.0, -0.20, ease);
+      this.baseCamY = lerp(0.0, -0.20, u);
+      this.baseCamZ = lerp(envCamZ, envCamZ * (7.2 / 7.5), u);
+      this.baseLookY = lerp(0.0, -0.20, u);
 
-      // Grounding contact shadow intensifies directly under the stationery base
-      if (this.tableContactShadow) {
-        this.tableContactShadow.position.x = 0;
-        this.tableContactShadow.material.opacity = ease * 0.72;
-      }
-
+      // Advance background descent with each sway sweep driven strictly by scroll progress!
       if (window.ambientBackground) {
-        window.ambientBackground.setSwayDescent(0.0, 0);
+        window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
       }
 
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
       // Smoothly rotate 180° around Y (0 -> Math.PI) as it lands to reveal MẶT SAU (BACK COVER) with wax seal!
-      const flipEase = t > 0.35 ? easeInOutCubic((t - 0.35) / 0.65) : 0;
+      const flipEase = u > 0.15 ? easeInOutCubic((u - 0.15) / 0.85) : 0;
       this.envelope.group.rotation.set(0, flipEase * Math.PI, 0);
       this.envelope.setFlapAngle(0);
       this.envelope.setSealOpacity(1.0);
 
-      // Strict reverse scroll re-lock: If user returns to p < 0.48, require hold again!
+      // Strict reverse scroll re-lock: If user returns to p < 0.50, require hold again!
       if (this.envelopeOpened) {
         this.envelopeOpened = false;
         this.openingProgress = 0.0;
@@ -932,7 +857,7 @@ export class SceneController {
         }
       }
 
-      // Scroll remains hidden inside sealed envelope while landing
+      // Scroll remains hidden inside sealed envelope while descending
       this.scroll.group.visible = false;
       this.scroll.group.position.set(0, -0.15, 0.025);
       this.scroll.group.rotation.set(0, 0, 0);
@@ -946,7 +871,7 @@ export class SceneController {
     }
 
     // =========================================================================
-    // PHASE 4: THE SEAL CHECKPOINT (p == 0.50, Envelope Sealed)
+    // PHASE 4: THE SEAL CHECKPOINT (p == 0.50, Envelope Landed on Banquet Table)
     // =========================================================================
     if (!this.envelopeOpened) {
       this.baseCamY = -0.20;
@@ -956,6 +881,14 @@ export class SceneController {
       // Docked stably on the banquet table
       this.stationeryGroup.position.set(0, -0.24, 0);
       this.stationeryGroup.rotation.set(0, 0, 0);
+      if (this.swayGroup) {
+        this.swayGroup.position.set(0, 0, 0);
+        this.swayGroup.rotation.set(0, 0, 0);
+      }
+
+      if (window.ambientBackground) {
+        window.ambientBackground.setSwayDescent(1.0, 0);
+      }
 
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, 0, 0);
@@ -970,17 +903,6 @@ export class SceneController {
 
       // Handle press-and-hold interaction
       if (this.state === 'HOLDING_SEAL') {
-        this.isSwaying = false;
-        this.swayFinished = true;
-        if (this.swayGroup) {
-          this.swayGroup.position.set(0, 0, 0);
-          this.swayGroup.rotation.set(0, 0, 0);
-        }
-        if (this.tableContactShadow) {
-          this.tableContactShadow.position.x = 0;
-          this.tableContactShadow.material.opacity = 0.72;
-        }
-
         const elapsed = now - this.holdStartTime;
         this.holdProgress = Math.min(1.0, elapsed / this.holdDuration);
 
@@ -997,17 +919,6 @@ export class SceneController {
           this.triggerOpenEnvelope();
         }
       } else if (this.state === 'OPENING_ENVELOPE') {
-        this.isSwaying = false;
-        this.swayFinished = true;
-        if (this.swayGroup) {
-          this.swayGroup.position.set(0, 0, 0);
-          this.swayGroup.rotation.set(0, 0, 0);
-        }
-        if (this.tableContactShadow) {
-          this.tableContactShadow.position.x = 0;
-          this.tableContactShadow.material.opacity = 0.72;
-        }
-
         this.openingProgress += dt * 1.15; // ~0.85s opening
         if (this.openingProgress >= 1.0) {
           this.openingProgress = 1.0;
@@ -1031,71 +942,8 @@ export class SceneController {
         this.scroll.group.position.set(0, lerp(-0.15, 0.22, ease), 0.025);
 
       } else {
-        // Pre-hold stage: settling sway or fully settled
-        if (!this.swayFinished && !this.isReducedMotion) {
-          if (!this.isSwaying) {
-            this.isSwaying = true;
-            this.swayStartTime = now;
-          }
-
-          const elapsed = now - this.swayStartTime;
-          const u = Math.min(1.0, elapsed / this.swayDuration);
-          const sway = this.getSwayTransform(u);
-
-          if (this.swayGroup) {
-            this.swayGroup.position.set(sway.x, sway.y, sway.z || 0);
-            this.swayGroup.rotation.set(sway.rotX, sway.rotY || 0, sway.rotZ);
-          }
-
-          if (this.tableContactShadow) {
-            this.tableContactShadow.position.x = sway.x;
-            const heightFactor = Math.max(0.18, 1.0 - (sway.y + 0.45) * 0.7);
-            this.tableContactShadow.material.opacity = 0.72 * heightFactor;
-          }
-
-          // Advance background descent with each sway sweep!
-          if (window.ambientBackground) {
-            window.ambientBackground.setSwayDescent(sway.bgDescent, sway.x / 3.5);
-          }
-
-          if (u < 1.0) {
-            this.state = 'SETTLING_SWAY';
-            if (this.holdTrigger) {
-              this.holdTrigger.classList.remove('visible', 'completed', 'holding');
-            }
-          } else {
-            this.swayFinished = true;
-            this.isSwaying = false;
-            if (this.swayGroup) {
-              this.swayGroup.position.set(0, 0, 0);
-              this.swayGroup.rotation.set(0, 0, 0);
-            }
-            if (this.tableContactShadow) {
-              this.tableContactShadow.position.x = 0;
-              this.tableContactShadow.material.opacity = 0.72;
-            }
-            if (window.ambientBackground) {
-              window.ambientBackground.setSwayDescent(1.0, 0);
-            }
-            this.state = 'SETTLED';
-          }
-        } else {
-          this.swayFinished = true;
-          this.isSwaying = false;
-          if (this.swayGroup) {
-            this.swayGroup.position.set(0, 0, 0);
-            this.swayGroup.rotation.set(0, 0, 0);
-          }
-          if (this.tableContactShadow) {
-            this.tableContactShadow.position.x = 0;
-            this.tableContactShadow.material.opacity = 0.72;
-          }
-          if (window.ambientBackground) {
-            window.ambientBackground.setSwayDescent(1.0, 0);
-          }
-          this.state = 'SETTLED';
-        }
-
+        // Pre-hold stage: Landed at rest on table, prompt user to press and hold wax seal
+        this.state = 'SETTLED';
         this.envelope.setFlapAngle(0);
         this.envelope.setSealOpacity(1.0);
         this.scroll.group.visible = false;
@@ -1109,7 +957,7 @@ export class SceneController {
           this.holdMeter.style.strokeDashoffset = `${offset}`;
         }
 
-        if (this.state === 'SETTLED' && this.holdTrigger) {
+        if (this.holdTrigger) {
           this.holdTrigger.style.display = '';
           this.holdTrigger.classList.remove('completed', 'holding');
           this.holdTrigger.classList.add('visible');
@@ -1128,9 +976,6 @@ export class SceneController {
     if (this.swayGroup) {
       this.swayGroup.position.set(0, 0, 0);
       this.swayGroup.rotation.set(0, 0, 0);
-    }
-    if (this.tableContactShadow) {
-      this.tableContactShadow.position.x = 0;
     }
     if (window.ambientBackground) {
       window.ambientBackground.setSwayDescent(1.0, 0);
@@ -1158,7 +1003,6 @@ export class SceneController {
       // Envelope rests on the table, moves back slightly
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, lerp(0.0, -0.10, ease), lerp(0.0, -0.25, ease));
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = lerp(0.72, 0.50, ease);
 
       // Letter scroll slides smoothly upward out of the envelope pocket
       this.scroll.group.visible = true;
@@ -1186,7 +1030,6 @@ export class SceneController {
       // Envelope rests in midground
       this.envelope.group.visible = true;
       this.envelope.group.position.set(0, -0.10, -0.25);
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0.45;
 
       // Scroll holds extracted position at top
       this.scroll.group.visible = true;
@@ -1210,7 +1053,6 @@ export class SceneController {
       // Envelope recedes into garden background and fades
       this.envelope.group.position.set(0, lerp(-0.10, -0.50, ease), lerp(-0.25, -3.5, ease));
       this.envelope.group.visible = (t < 0.65);
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = Math.max(0, (1 - ease * 1.5) * 0.45);
 
       // Letter scroll unrolls progressively downward into complete wedding invitation!
       // NO OVERLAYED IMAGE/CARD: The unrolling scroll itself is the sole wedding letter!
@@ -1247,7 +1089,6 @@ export class SceneController {
       this.baseLookY = 0.0;
 
       this.envelope.group.visible = false;
-      if (this.tableContactShadow) this.tableContactShadow.material.opacity = 0;
 
       // THE WEDDING LETTER is fully unrolled, planar, centered, upright, and legible!
       this.scroll.group.visible = true;
